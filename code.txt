@@ -1,0 +1,354 @@
+.text
+.globl main
+#-------------------------------------------- Compiler Functions --------------------------------------------#
+ReadLine:
+        li $t0 , 0
+        li $t1 , '\n'
+        loopReadLine:
+            li $v0 , 12
+            syscall
+            addi $t0 , $t0 , 1
+            addi $sp , $sp , -1
+            beq $v0 , $t1 , endLoopReadLine
+            sb $v0 , 1($sp)
+            j loopReadLine
+            endLoopReadLine:
+            sb $zero , 1($sp)
+        # Allocating Space in Heap
+        li $v0 , 9
+        addi $a0 , $t0 , 0
+        syscall
+        move $t1 , $v0 # $t1 Holds the address of String in Heap
+        # Moving String from stack to Heap
+        addi $t0 , $t0 , -1 # $t0 is the offset of char in Heap ( from the end of allocated area )
+        loopMoveString:
+            add $t2 , $t1 , $t0 # $t2 is Char address in Heap
+            lb $t3 , 1($sp)
+            sb $t3 , 0($t2)
+            beq $t0 , $zero , endLoopMoveString
+            addi $sp , $sp , 1
+            addi $t0 , $t0 , -1
+            j loopMoveString
+        endLoopMoveString:
+        addi $sp , $sp , 1
+        # Here $v0 Contains the string address allocated in Heap
+        jr $ra
+
+StringsEquality:
+	move $t1 , $a0 # String 1
+	move $t2 , $a1 # String 2
+	li $t5 , 1
+	loopCheckEquality:
+		lb $t3 , 0($t1)
+		lb $t4 , 0($t2)
+		bne $t3 , $t4 , StringsNotEqualLabel
+		beq $t3 , $zero , endLoopCheckEquality
+		addi $t1 , $t1 , 1
+		addi $t2 , $t2 , 1
+		j loopCheckEquality
+		StringsNotEqualLabel:
+		li $t5 , 0
+	endLoopCheckEquality:
+	move $v0 , $t5
+	jr $ra
+
+StringsInequality:
+	addi $sp , $sp , -4
+	sw $ra , 4($sp)
+	jal StringsEquality
+	addi $sp , $sp , 4
+	lw $ra , 0($sp)
+	nor $v0 , $v0 , $v0
+	addi $v0 , $v0 , 2 # All 1's from bit[1] to left becomes Zero
+	jr $ra
+#-------------------------------------------- Program --------------------------------------------#
+main: # Start function body
+# Function Body :
+# Begin of Statement Block
+addi $sp , $sp , -12 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+# Loading Address of ID : a
+addi $s7, $fp, 8
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Double Constant : 2.5
+li.s $f0, 2.5
+s.s $f0, 0($sp)
+addi $sp, $sp, -4
+# Assign Expression
+lw $t0 , 8($sp)
+l.s $f0 , 4($sp)
+s.s $f0 , 0($t0)
+s.s $f0 , 8($sp)
+addi $sp , $sp , 4
+# End of Expression Optional
+addi $sp , $sp 4
+# Loading Address of ID : b
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Double Constant : 1.1
+li.s $f0, 1.1
+s.s $f0, 0($sp)
+addi $sp, $sp, -4
+# Assign Expression
+lw $t0 , 8($sp)
+l.s $f0 , 4($sp)
+s.s $f0 , 0($t0)
+s.s $f0 , 8($sp)
+addi $sp , $sp , 4
+# End of Expression Optional
+addi $sp , $sp 4
+# Loading Address of ID : c
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of c to Stack
+addi $sp, $sp, -4
+# Double Constant : 1.1
+li.s $f0, 1.1
+s.s $f0, 0($sp)
+addi $sp, $sp, -4
+# Assign Expression
+lw $t0 , 8($sp)
+l.s $f0 , 4($sp)
+s.s $f0 , 0($t0)
+s.s $f0 , 8($sp)
+addi $sp , $sp , 4
+# End of Expression Optional
+addi $sp , $sp 4
+# Loading Address of ID : a
+addi $s7, $fp, 8
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Loading Address of ID : b
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Add Expression
+l.s $f0 , 8($sp)
+l.s $f1 , 4($sp)
+add.s $f0 , $f0 , $f1
+s.s $f0 , 8($sp)
+addi $sp , $sp , 4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+l.s $f12 , 0($sp)
+li $v0 , 2
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Loading Address of ID : a
+addi $s7, $fp, 8
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Loading Address of ID : b
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Sub Expression
+l.s $f0 , 8($sp)
+l.s $f1 , 4($sp)
+sub.s $f0 , $f0 , $f1
+s.s $f0 , 8($sp)
+addi $sp , $sp , 4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+l.s $f12 , 0($sp)
+li $v0 , 2
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Loading Address of ID : b
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Loading Address of ID : a
+addi $s7, $fp, 8
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Sub Expression
+l.s $f0 , 8($sp)
+l.s $f1 , 4($sp)
+sub.s $f0 , $f0 , $f1
+s.s $f0 , 8($sp)
+addi $sp , $sp , 4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+l.s $f12 , 0($sp)
+li $v0 , 2
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# String Constant : "-------------"
+la $t0, D0
+sw $t0, 0($sp)
+addi $sp, $sp, -4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Loading Address of ID : a
+addi $s7, $fp, 8
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Loading Address of ID : b
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Div Expression
+l.s $f0 , 8($sp)
+l.s $f1 , 4($sp)
+div.s $f0 , $f0 , $f1
+s.s $f0 , 8($sp)
+addi $sp , $sp , 4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+l.s $f12 , 0($sp)
+li $v0 , 2
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Loading Address of ID : b
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Loading Address of ID : a
+addi $s7, $fp, 8
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Div Expression
+l.s $f0 , 8($sp)
+l.s $f1 , 4($sp)
+div.s $f0 , $f0 , $f1
+s.s $f0 , 8($sp)
+addi $sp , $sp , 4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+l.s $f12 , 0($sp)
+li $v0 , 2
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Loading Address of ID : b
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Loading Address of ID : b
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Div Expression
+l.s $f0 , 8($sp)
+l.s $f1 , 4($sp)
+div.s $f0 , $f0 , $f1
+s.s $f0 , 8($sp)
+addi $sp , $sp , 4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+l.s $f12 , 0($sp)
+li $v0 , 2
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Loading Address of ID : b
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Loading Address of ID : c
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of c to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : c
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of c Pushed to Stack
+# Mul Expression
+l.s $f0 , 8($sp)
+l.s $f1 , 4($sp)
+mul.s $f0 , $f0 , $f1
+s.s $f0 , 8($sp)
+addi $sp , $sp , 4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+l.s $f12 , 0($sp)
+li $v0 , 2
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+addi $sp , $sp , 12 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+main_end :
+# Loading Return value
+addi $sp , $sp , 4
+lw $v0 , 0($sp)
+jr $ra
+
+
+.data
+D0: .asciiz "-------------"
+str_false : .asciiz "false" 
+str_true : .asciiz "true" 
+str_bool : .word str_false , str_true
