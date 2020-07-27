@@ -1,6 +1,7 @@
 import os
 from lark import Transformer
 import pprint
+import re
 
 
 class Stack:
@@ -40,12 +41,31 @@ class Var:
 
 
 class CodeGen(Transformer):
-    def __init__(self):
+    def __init__(self,functions):
         self.label_num = 0
         self.data_name_num = 0
+        self.break_num = 0
         self.data_code = ''
         self.Stack = Stack()
+        self.Functions = functions
 
+    def function_type(self , name):
+        for function in self.Functions:
+            if function['name'] == name:
+                return function['type']
+        raise Exception("function ( " + name + " ) not found !!!")
+
+    def in_break_labels(self , arr , name):
+        for item in arr:
+            if item['name'] == name:
+                return True
+        return False
+
+    def get_count_break_label(self , arr , name):
+        for item in arr:
+            if item['name'] == name:
+                return item['count']
+        raise Exception("no label found for " + name)
     ################################################### Assets ###################################################
     def label_generator(self):
         newLabel = "L" + str(self.label_num)
@@ -55,6 +75,10 @@ class CodeGen(Transformer):
         new_name = 'D' + str(self.data_name_num)
         self.data_name_num += 1
         return new_name
+    def break_generator(self):
+        new_break = 'break' + str(self.break_num)
+        self.break_num += 1;
+        return new_break
     #[--------------------------------------------------------- Debugging tools ---------------------------------------------------------]
     def log_code(self,code):
         dirname = os.path.dirname(__file__)
@@ -116,14 +140,21 @@ class CodeGen(Transformer):
         self.Stack.push(Var(var_id,var_type))
         return {'variable_count': args[0]['variable_count'] + 1}
     ######################################################### Expressions #########################################################
+    ############### Expr More ###############
+    def expr_more(self , args):
+        expr = args[0]
+        expr_more = args[1]
+        return {'code' : expr['code'] + expr_more['code'] , 'variable_count' : expr_more['variable_count'] + 1}
+    def expr_more_empty(self , args):
+        return {'code' : '' , 'variable_count' : 0}
     ############### Expr Optional ###############
     def stmt_expr_optional(self, args):
         code = args[0]['code']
         if code != '':
             code += "# End of Expression Optional\n"
             code += "addi $sp , $sp 4\n"
-            return {'code' : code }
-        return {'code' : ''}
+            return {'code' : code , 'break_labels' : []}
+        return {'code' : '', 'break_labels' : []}
     def expr_optional(self, args):
         return args[0]
     def expr_optional_empty(self, args):
@@ -538,6 +569,7 @@ class CodeGen(Transformer):
         return {'code': code, 'value_type': 'string'}
     ############### Print ###############
     def stmt_print_stmt(self, args):
+        args[0]['break_labels'] = []
         return args[0]
     def print_stmt(self, args):
         expr = args[0]
@@ -566,6 +598,9 @@ class CodeGen(Transformer):
         code += "li $v0 , 11\n"
         code += "syscall\n"
         return {'code': code}
+    ############### Call ###############
+    def expr_atomic_call(self , args):
+        return args[0]
     ######################################################### Left Value #########################################################
     ############### Left Value ID ###############
     def left_value_id(self, args):
@@ -622,20 +657,33 @@ class CodeGen(Transformer):
     ######################################################### Statement #########################################################
     ############### Statement Block ###############
     def stmt_block(self , args):
+        variable_decls = args[0]
+        stmts = args[1]
         code = "# Begin of Statement Block\n"
-        code += "addi $sp , $sp , -" + str(args[0]['variable_count'] * 4) + " # Allocate From Stack For Block Statement Variables\n"
+        code += "addi $sp , $sp , -" + str(variable_decls['variable_count'] * 4) + " # Allocate From Stack For Block Statement Variables\n"
         code += "addi $fp , $sp , 4\n"
-        code += args[1]['code']
-        code += "addi $sp , $sp , " + str( args[0]['variable_count'] * 4) + " # UnAllocate Stack Area (Removing Block Statement Variables)\n"
+        code += stmts['code']
+        code += "addi $sp , $sp , " + str( variable_decls['variable_count'] * 4) + " # UnAllocate Stack Area (Removing Block Statement Variables)\n"
         code += "addi $fp ,$sp , 4\n"
         code += "# End of Statement Block\n"
-        self.Stack.pop(args[0]['variable_count'])
-        return {'code' : code}
+        self.Stack.pop(variable_decls['variable_count'])
+
+        # Handling breaks ...
+        break_labels = stmts['break_labels']
+        pattern = re.compile(r'@(break\d+)@')
+        for break_label in re.findall(pattern, code):
+            if not self.in_break_labels(break_labels, break_label):
+                break_labels.append({'name' : break_label , 'count' : 0})
+        for item in break_labels:
+            item['count'] += variable_decls['variable_count']
+
+        return {'code' : code , 'break_labels' : break_labels}
     def stmts(self, args):
         code = args[0]['code'] + args[1]['code']
-        return {'code': code}
+        break_labels = args[0]['break_labels'] + args[1]['break_labels']
+        return {'code': code , 'break_labels': break_labels}
     def stmts_empty(self, args):
-        return {'code': ''}
+        return {'code': '' , 'break_labels' : []}
     def stmt_stmt_block(self, args):
         return args[0]
     ############### if Statement ###############
@@ -656,7 +704,7 @@ class CodeGen(Transformer):
         code += "# Loading IF Condition Result\n"
         code += "addi $sp , $sp , 4\n"
         code += "lw $t0 , 0($sp)\n"
-        code += "beqz $t0 , " + elseLabel + " # Jumping to else lable if expression is false\n"
+        code += "beqz $t0 , " + elseLabel + " # Jumping to else label if expression is false\n"
         code += "# IF Statement Body\n"
         code += stmt1['code']
         code += "j " + endLabel + " # Jump to end of if_stmt\n"
@@ -664,7 +712,7 @@ class CodeGen(Transformer):
         code += elseLabel + ":\n"
         code += stmt2['code']
         code += endLabel + ":\n"
-        return {'code' : code}
+        return {'code' : code , 'break_labels' : stmt1['break_labels'] + stmt2['break_labels']}
     def us(self , args):
         expr = args[0]
         stmt = args[1]
@@ -674,11 +722,11 @@ class CodeGen(Transformer):
         code += "# Loading IF Condition\n"
         code += "addi $sp , $sp , 4\n"
         code += "lw $t0 , 0($sp)\n"
-        code += "beqz $t0 , " + endLabel + " # Jumping to end lable if expression is false\n"
+        code += "beqz $t0 , " + endLabel + " # Jumping to end label if expression is false\n"
         code += "# IF Statement Body\n"
         code += stmt['code']
         code += endLabel + ":\n"
-        return {'code' : code}
+        return {'code' : code , 'break_labels' : stmt['break_labels']}
     ############### while loop ###############
     def stmt_while_stmt(self , args):
         return args[0]
@@ -687,18 +735,27 @@ class CodeGen(Transformer):
         stmt = args[1]
         startLabel = self.label_generator()
         endLabel = self.label_generator()
-        stmt['code'] = stmt['code'].replace("@break@","j " + endLabel + " # Break from loop while")
+
+        # Handling breaks ...
+        break_labels = stmt['break_labels']
+        pattern = re.compile(r'@(break\d+)@')
+        for break_label in re.findall(pattern, stmt['code']):
+            count = self.get_count_break_label(break_labels , break_label)
+            code_for_break = "addi $sp , $sp , " + str(count * 4) + " # Pop elements before\n"
+            code_for_break += "j " + endLabel + " # Break from loop while\n"
+            stmt['code'] = stmt['code'].replace("@" + break_label + "@" , code_for_break)
+
         code = startLabel + ": # Starting While Loop Body\n"
         code += "# Calculating While Condition\n"
         code += expr['code']
         code += "# Loading While Condition Result\n"
         code += "addi $sp , $sp , 4\n"
         code += "lw $t0 , 0($sp)\n"
-        code += "beqz $t0 , " + endLabel + " # Jumping to end lable if expression is false\n"
+        code += "beqz $t0 , " + endLabel + " # Jumping to end label if expression is false\n"
         code += stmt['code']
         code += "j " + startLabel + " # Jumping to beggining of while loop\n"
         code += endLabel + ":\n"
-        return {'code' : code}
+        return {'code' : code , 'break_labels' : []}
     ############### for loop ###############
     def stmt_for_stmt(self , args):
         return args[0]
@@ -709,7 +766,16 @@ class CodeGen(Transformer):
         stmt = args[3]
         startLabel = self.label_generator()
         endLabel = self.label_generator()
-        stmt['code'] = stmt['code'].replace("@break@","j " + endLabel + " # Break from loop for")
+
+        # Handling breaks ...
+        break_labels = stmt['break_labels']
+        pattern = re.compile(r'@(break\d+)@')
+        for break_label in re.findall(pattern, stmt['code']):
+            count = self.get_count_break_label(break_labels, break_label)
+            code_for_break = "addi $sp , $sp , " + str(count * 4) + " # Pop elements before\n"
+            code_for_break += "j " + endLabel + " # Break from loop for\n"
+            stmt['code'] = stmt['code'].replace("@" + break_label + "@", code_for_break)
+
         code = "# Initialization Expression of Loop for\n"
         code += expr_initialization['code']
         if expr_initialization['code'] != '':
@@ -720,7 +786,7 @@ class CodeGen(Transformer):
         code += "# Loading For Loop Condition Result\n"
         code += "addi $sp , $sp , 4\n"
         code += "lw $t0 , 0($sp)\n"
-        code += "beqz $t0 , " + endLabel + " # Jumping to end lable if Condition Expression of for loop is false\n"
+        code += "beqz $t0 , " + endLabel + " # Jumping to end label if Condition Expression of for loop is false\n"
         code += stmt['code']
         code += "# Step Expression of For loop \n"
         code += expr_step['code']
@@ -728,28 +794,30 @@ class CodeGen(Transformer):
             code += "addi $sp , $sp , 4 # pop step expr of loop for\n"
         code += "j " + startLabel + " # Jumping to beggining of while loop\n"
         code += endLabel + ":\n"
-        return {'code' : code}
+        return {'code' : code , 'break_labels' : []}
     ############### Break ###############
     def stmt_break_stmt(self , args):
+        args[0]['break_labels'] = []
         return args[0]
     def break_stmt(self , args):
-        code = "@break@\n"
+        code = "@" + self.break_generator() + "@\n"
         return {'code' : code}
     ######################################################### Function #########################################################
     ############### Formals and Variables ###############
     def formals(self , args):
         variable = args[0]
         more_variables = args[1]
-        variables = variable['variables'] + more_variables['variables']
+        variables = [{'id' : variable['id'] , 'type' : variable['type']}] + more_variables['variables']
         for var in variables:
             self.Stack.push(Var(var['id'], var['type']))
+        pass
     def formals_empty(self , args):
         pass
     def more_variables(self , args):
         variable = args[0]
         variable_obj = [ {'type' : variable['type'], 'id' : variable['id']} ]
         more_variables = args[1]
-        return {'variables' : variable['variables'] + more_variables['variables']}
+        return {'variables' : variable_obj + more_variables['variables']}
     def more_variables_empty(self , args):
         return {'variables' : []}
     ############### Function Declaration ###############
@@ -760,16 +828,13 @@ class CodeGen(Transformer):
         functionName = args[1].children[0]
         formals = args[2]
         stmt_block = args[3]
-        label_end = functionName + "_end :\n"
+        label_end = functionName + "_end"
         stmt_block['code'] = stmt_block['code'].replace("@return@","j " + label_end + " # Jump to end function ( return )\n")
-        code = functionName + ": # Start function body\n"
-        # code += "addi $fp , $sp , 0 # Set Frame Pointer of function\n"
+        code = functionName + ": # Start function\n"
+        code += "addi $s5 , $sp , 0 # Storing $sp of function at beginning in $s5\n"
         code += "# Function Body :\n"
         code += stmt_block['code']
-        code += label_end
-        code += "# Loading Return value\n"
-        code += "addi $sp , $sp , 4\n"
-        code += "lw $v0 , 0($sp)\n"
+        code += label_end + " :\n"
         code += "jr $ra\n"
         return {'code' : code}
     def function_decl_void(self , args):
@@ -779,42 +844,61 @@ class CodeGen(Transformer):
         label_end = functionName + "_end :\n"
         stmt_block['code'] = stmt_block['code'].replace("@return@","j " + label_end + " # Jump to end function\n")
         code = functionName + ": # Start function body\n"
+        code += "addi $s5 , $sp , 0 # Storing $sp of function at beginning in $s5\n"
         code += "addi $fp , $sp , 0 # Set Frame Pointer of function\n"
         code += "# Function Body :\n"
         code += stmt_block['code']
         code += label_end
         code += "jr $ra\n"
         return {'code': code}
+    ############### return ###############
+    def stmt_return_stmt(self, args):
+        args[0]['break_labels'] = []
+        return args[0]
+    def return_stmt(self, args):
+        exprOptional = args[0]
+        code = ''
+        if exprOptional['code'] != '':
+            code = exprOptional['code']
+            if exprOptional['value_type'] == 'double':
+                code += 'l.s $f0 , 4($sp) # Loading Return Value of function\n'
+            else:
+                code += 'lw $v0 , 4($sp) # Loading Return Value of function\n'
+            code += "addi $sp , $sp , 4\n"
+            code += "move $sp , $s5\n"
+            code += "jr $ra # Return Function\n"
+        return {'code' : code}
     ############### Function Call ###############
     def call(self , args):
-        id = args[0]
+        id = args[0].children[0]
+        value_type = self.function_type(id)
         actuals = args[1]
-        code = "# Storing Frame Pointer and Return Address Before Calling the function\n"
-        code += "addi $sp , $sp , -8\n"
+        code = "# Storing Frame Pointer and Return Address Before Calling the function : " + id + "\n"
+        code += "addi $sp , $sp , -12\n"
         code += "sw $fp , 4($sp)\n"
         code += "sw $ra , 8($sp)\n"
+        code += "sw $s5 , 12($sp)\n"
         code += "# Function Arguments\n"
         code += actuals['code']
-        code += "jal " + id['name'] + " #Calling Function\n"
-        code += "# Pop Arguments of function"
+        code += "jal " + id + " # Calling Function\n"
+        code += "# Pop Arguments of function\n"
         code += "addi $sp , $sp , " + str(actuals['variable_count']*4) + "\n"
-        code += "# Load Back Fram Pointer and Return Address After Function call\n"
+        code += "# Load Back Frame Pointer and Return Address After Function call\n"
         code += "lw $fp , 4($sp)\n"
         code += "lw $ra , 8($sp)\n"
-        code += "addi $sp , $sp , 4\n"
-        code += "sw $v0 , 4($sp) # Push Return Value from function to Stack\n"
-        return {'code': code}
+        code += "lw $s5 , 12($sp)\n"
+        code += "addi $sp , $sp , 8\n"
+        if value_type == 'double':
+            code += "s.s $f0 , 4($sp) # Push Return Value from function to Stack\n"
+        else:
+            code += "sw $v0 , 4($sp) # Push Return Value from function to Stack\n"
+        return {'code': code , 'value_type' : value_type}
     def actuals(self , args):
         expr = args[0]
         expr_more = args[1]
         return {'variable_count' : expr_more['variable_count'] + 1 , 'code' : expr['code'] + expr_more['code'] }
-    ############### return ###############
-    def stmt_return_stmt(self , args):
-        return args[0]
-    def return_stmt(self , args):
-        exprOptional = args[0]
-        code = exprOptional['code']
-        code += "@return@\n"
+    def actuals_empty(self , args):
+        return {'variable_count': 0, 'code': ''}
     ######################################################### Class #########################################################
     ############### Class Extends ###############
     def extends_optional(self , args):

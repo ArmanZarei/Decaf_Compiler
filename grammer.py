@@ -1,5 +1,7 @@
 from lark import Lark , Transformer
 from CodeGen import CodeGen
+from CodeGen_First_Pass import Cg
+import pprint
 
 grammar = """
 start: program
@@ -30,7 +32,7 @@ function_decl: type id "(" formals ")" stmt_block -> function_decl
 formals: variable more_variables -> formals
     | -> formals_empty
 more_variables: "," variable more_variables -> more_variables
-    | 
+    | -> more_variables_empty
 
 class_decl: "class" id extends_optional implements_optional "{" fields "}" -> class_decl
 extends_optional: "extends" id -> extends_optional
@@ -86,8 +88,8 @@ break_stmt: "break" ";" -> break_stmt
 
 print_stmt: "Print" "(" expr ")" ";" -> print_stmt
 expr_merged: expr expr_more
-expr_more: "," expr expr_more
-    | 
+expr_more: "," expr expr_more -> expr_more
+    | -> expr_more_empty
 
 expr: expr_assign -> expr
 expr_assign: left_value "=" expr_assign -> expr_assign
@@ -118,7 +120,7 @@ expr_par: "(" expr ")" -> expr_par
     | expr_atomic -> expr_par_pass
 expr_atomic: constant -> expr_atomic_constant
     | left_value -> expr_atomic_left_value
-    | call
+    | call -> expr_atomic_call
     | "this"
     | "ReadInteger()" -> expr_atomic_read_integer
     | "ReadLine()" -> expr_atomic_read_line
@@ -132,8 +134,8 @@ left_value: id -> left_value_id
 call: id "(" actuals ")" -> call
     | expr_atomic "."  id "(" actuals ")"
 
-actuals: expr expr_more
-    |
+actuals: expr expr_more -> actuals
+    | -> actuals_empty
 
 constant: INT -> constant_int
     | DOUBLE -> constant_double
@@ -161,66 +163,32 @@ COMMENT: "//" /(.)+/ NEWLINE
 
 """
 
-parser = Lark(grammar, parser="lalr", transformer=CodeGen(), debug=False)
 
 code = """
 
+int fact( int a ){
+    if( a == 1 ){
+        return 1;
+    }
+    return a * fact( a - 1 );
+}
+
+int fib( int n ){
+    if ( n == 1 || n == 2 ){
+        return 1;
+    }
+    return fib( n-1 ) + fib( n - 2);
+}
+
 int main() {
-    int a;
-    int b;
-    a = 10;
-    while ( a >= 0 ){
-        a = a-1;
-        if( a == 5 ){
-            break;
-        }
-        Print(a);
-    }
-    Print("Should Print from 9 to 6");
-    Print("-------------------");
-     a = 10;
-    while ( a >= 0 ){
-        a = a-1;
-        if( a == 3 )
-            break;
-        Print(a);
-    }
-    Print("Should Print from 9 to 4");
-    Print("-------------------");
-    a = 0;
-    while( a < 10 ){
-        b = 0;
-        while( b < 10 ){
-            Print(a);
-            Print(b);
-            Print("-----");
-            if( b == 4 ){
-                break;
-            }
-            b = b + 1;
-        }
-        a = a + 1;
-    }
-    Print("-------------------");
-    for( a = 0 ; a < 10 ; a = a + 1 ){
-        Print( a );
-        if( a == 7 ){
-            break;
-        }
-    }
-    Print("a should be : 0 -> 7");
-    Print("----------------------------");
-    for( a = 0 ; a < 10 ; a = a + 1 ){
-        for( b = 0 ; b < 10 ; b = b + 1 ){
-            Print(a);
-            Print(b);
-            if(b == 3){
-                break;
-            }
-            Print("----");
-        }
-    }
+    Print( fact(4) );
+    Print( fib(8) );
 }
 
 """
+
+CodeGen_First_Pass = Cg()
+parser_first_pass = Lark(grammar , parser="lalr" , transformer=CodeGen_First_Pass , debug=False)
+parser_first_pass.parse(code)
+parser = Lark(grammar, parser="lalr", transformer=CodeGen(CodeGen_First_Pass.get_functions()), debug=False)
 parser.parse(code)
