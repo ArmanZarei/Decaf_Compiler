@@ -62,13 +62,30 @@ StringsInequality:
 	addi $v0 , $v0 , 2 # All 1's from bit[1] to left becomes Zero
 	jr $ra
 #-------------------------------------------- Program --------------------------------------------#
-fact: # Start function
+main: # Start function
 addi $s5 , $sp , 0 # Storing $sp of function at beginning in $s5
 # Function Body :
 # Begin of Statement Block
-addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $sp , $sp , -4 # Allocate From Stack For Block Statement Variables
 addi $fp , $sp , 4
-# Calculating IF Condition
+# Initialization Expression of Loop for
+# Loading Address of ID : a
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Int Constant : 0
+li $t0 , 0
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+addi $sp , $sp , 4 # pop init expr of loop for
+L1: # Starting for Loop Body
+# Calculating For Loop Condition
 # Loading Address of ID : a
 addi $s7, $fp, 0
 sw $s7, 0($sp) # Push Address of a to Stack
@@ -77,8 +94,50 @@ addi $sp, $sp, -4
 lw $t0, 4($sp)
 lw $t0 , 0($t0)
 sw $t0 , 4($sp) # Value of a Pushed to Stack
-# Int Constant : 1
-li $t0 , 1
+# Int Constant : 10
+li $t0 , 10
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Less Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+slt $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Loading For Loop Condition Result
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L2 # Jumping to end label if Condition Expression of for loop is false
+# Begin of Statement Block
+addi $sp , $sp , -12 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+# Loading Address of ID : a
+addi $s7, $fp, 12
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Calculating IF Condition
+# Loading Address of ID : a
+addi $s7, $fp, 12
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Int Constant : 5
+li $t0 , 5
 sw $t0 , 0($sp)
 addi $sp, $sp, -4
 # Equal Expression
@@ -93,20 +152,23 @@ lw $t0 , 0($sp)
 beqz $t0 , L0 # Jumping to end label if expression is false
 # IF Statement Body
 # Begin of Statement Block
-addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $sp , $sp , -8 # Allocate From Stack For Block Statement Variables
 addi $fp , $sp , 4
-# Int Constant : 1
-li $t0 , 1
-sw $t0 , 0($sp)
-addi $sp, $sp, -4
-lw $v0 , 4($sp) # Loading Return Value of function
-addi $sp , $sp , 4
-move $sp , $s5
-jr $ra # Return Function
-addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $sp , $sp , 20 # Pop elements before
+j L2 # Break from loop for
+
+addi $sp , $sp , 8 # UnAllocate Stack Area (Removing Block Statement Variables)
 addi $fp ,$sp , 4
 # End of Statement Block
 L0:
+addi $sp , $sp , 12 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+# Step Expression of For loop 
+# Loading Address of ID : a
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
 # Loading Address of ID : a
 addi $s7, $fp, 0
 sw $s7, 0($sp) # Push Address of a to Stack
@@ -115,265 +177,26 @@ addi $sp, $sp, -4
 lw $t0, 4($sp)
 lw $t0 , 0($t0)
 sw $t0 , 4($sp) # Value of a Pushed to Stack
-# Storing Frame Pointer and Return Address Before Calling the function : fact
-addi $sp , $sp , -12
-sw $fp , 4($sp)
-sw $ra , 8($sp)
-sw $s5 , 12($sp)
-# Function Arguments
-# Loading Address of ID : a
-addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of a to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : a
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of a Pushed to Stack
 # Int Constant : 1
 li $t0 , 1
 sw $t0 , 0($sp)
 addi $sp, $sp, -4
-# Sub Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-sub $t0 , $t0 , $t1
-sw $t0 , 8($sp)
-addi $sp , $sp , 4
-jal fact # Calling Function
-# Pop Arguments of function
-addi $sp , $sp , 4
-# Load Back Frame Pointer and Return Address After Function call
-lw $fp , 4($sp)
-lw $ra , 8($sp)
-lw $s5 , 12($sp)
-addi $sp , $sp , 8
-sw $v0 , 4($sp) # Push Return Value from function to Stack
-# Mul Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-mul $t0 , $t0 , $t1
-sw $t0 , 8($sp)
-addi $sp , $sp , 4
-lw $v0 , 4($sp) # Loading Return Value of function
-addi $sp , $sp , 4
-move $sp , $s5
-jr $ra # Return Function
-addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
-addi $fp ,$sp , 4
-# End of Statement Block
-fact_end :
-jr $ra
-fib: # Start function
-addi $s5 , $sp , 0 # Storing $sp of function at beginning in $s5
-# Function Body :
-# Begin of Statement Block
-addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
-addi $fp , $sp , 4
-# Calculating IF Condition
-# Loading Address of ID : n
-addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of n to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : n
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of n Pushed to Stack
-# Int Constant : 1
-li $t0 , 1
-sw $t0 , 0($sp)
-addi $sp, $sp, -4
-# Equal Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-seq $t0 , $t0 , $t1
-sw $t0 , 8($sp)
-addi $sp , $sp , 4
-# Loading Address of ID : n
-addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of n to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : n
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of n Pushed to Stack
-# Int Constant : 2
-li $t0 , 2
-sw $t0 , 0($sp)
-addi $sp, $sp, -4
-# Equal Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-seq $t0 , $t0 , $t1
-sw $t0 , 8($sp)
-addi $sp , $sp , 4
-# Or Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-or $t0 , $t0 , $t1
-sw $t0 , 8($sp)
-addi $sp , $sp , 4
-# Loading IF Condition
-addi $sp , $sp , 4
-lw $t0 , 0($sp)
-beqz $t0 , L1 # Jumping to end label if expression is false
-# IF Statement Body
-# Begin of Statement Block
-addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
-addi $fp , $sp , 4
-# Int Constant : 1
-li $t0 , 1
-sw $t0 , 0($sp)
-addi $sp, $sp, -4
-lw $v0 , 4($sp) # Loading Return Value of function
-addi $sp , $sp , 4
-move $sp , $s5
-jr $ra # Return Function
-addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
-addi $fp ,$sp , 4
-# End of Statement Block
-L1:
-# Storing Frame Pointer and Return Address Before Calling the function : fib
-addi $sp , $sp , -12
-sw $fp , 4($sp)
-sw $ra , 8($sp)
-sw $s5 , 12($sp)
-# Function Arguments
-# Loading Address of ID : n
-addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of n to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : n
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of n Pushed to Stack
-# Int Constant : 1
-li $t0 , 1
-sw $t0 , 0($sp)
-addi $sp, $sp, -4
-# Sub Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-sub $t0 , $t0 , $t1
-sw $t0 , 8($sp)
-addi $sp , $sp , 4
-jal fib # Calling Function
-# Pop Arguments of function
-addi $sp , $sp , 4
-# Load Back Frame Pointer and Return Address After Function call
-lw $fp , 4($sp)
-lw $ra , 8($sp)
-lw $s5 , 12($sp)
-addi $sp , $sp , 8
-sw $v0 , 4($sp) # Push Return Value from function to Stack
-# Storing Frame Pointer and Return Address Before Calling the function : fib
-addi $sp , $sp , -12
-sw $fp , 4($sp)
-sw $ra , 8($sp)
-sw $s5 , 12($sp)
-# Function Arguments
-# Loading Address of ID : n
-addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of n to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : n
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of n Pushed to Stack
-# Int Constant : 2
-li $t0 , 2
-sw $t0 , 0($sp)
-addi $sp, $sp, -4
-# Sub Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-sub $t0 , $t0 , $t1
-sw $t0 , 8($sp)
-addi $sp , $sp , 4
-jal fib # Calling Function
-# Pop Arguments of function
-addi $sp , $sp , 4
-# Load Back Frame Pointer and Return Address After Function call
-lw $fp , 4($sp)
-lw $ra , 8($sp)
-lw $s5 , 12($sp)
-addi $sp , $sp , 8
-sw $v0 , 4($sp) # Push Return Value from function to Stack
 # Add Expression
 lw $t0 , 8($sp)
 lw $t1 , 4($sp)
 add $t0 , $t0 , $t1
 sw $t0 , 8($sp)
 addi $sp , $sp , 4
-lw $v0 , 4($sp) # Loading Return Value of function
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
 addi $sp , $sp , 4
-move $sp , $s5
-jr $ra # Return Function
-addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
-addi $fp ,$sp , 4
-# End of Statement Block
-fib_end :
-jr $ra
-main: # Start function
-addi $s5 , $sp , 0 # Storing $sp of function at beginning in $s5
-# Function Body :
-# Begin of Statement Block
-addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
-addi $fp , $sp , 4
-# Storing Frame Pointer and Return Address Before Calling the function : fact
-addi $sp , $sp , -12
-sw $fp , 4($sp)
-sw $ra , 8($sp)
-sw $s5 , 12($sp)
-# Function Arguments
-# Int Constant : 4
-li $t0 , 4
-sw $t0 , 0($sp)
-addi $sp, $sp, -4
-jal fact # Calling Function
-# Pop Arguments of function
-addi $sp , $sp , 4
-# Load Back Frame Pointer and Return Address After Function call
-lw $fp , 4($sp)
-lw $ra , 8($sp)
-lw $s5 , 12($sp)
-addi $sp , $sp , 8
-sw $v0 , 4($sp) # Push Return Value from function to Stack
-# Print : 
-addi $sp , $sp , 4 # Pop Expression of Print
-lw $a0 , 0($sp)
-li $v0 , 1
-syscall
-li $a0 , '\n'
-li $v0 , 11
-syscall
-# Storing Frame Pointer and Return Address Before Calling the function : fib
-addi $sp , $sp , -12
-sw $fp , 4($sp)
-sw $ra , 8($sp)
-sw $s5 , 12($sp)
-# Function Arguments
-# Int Constant : 8
-li $t0 , 8
-sw $t0 , 0($sp)
-addi $sp, $sp, -4
-jal fib # Calling Function
-# Pop Arguments of function
-addi $sp , $sp , 4
-# Load Back Frame Pointer and Return Address After Function call
-lw $fp , 4($sp)
-lw $ra , 8($sp)
-lw $s5 , 12($sp)
-addi $sp , $sp , 8
-sw $v0 , 4($sp) # Push Return Value from function to Stack
-# Print : 
-addi $sp , $sp , 4 # Pop Expression of Print
-lw $a0 , 0($sp)
-li $v0 , 1
-syscall
-li $a0 , '\n'
-li $v0 , 11
-syscall
-addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $sp , $sp , 4 # pop step expr of loop for
+j L1 # Jumping to beggining of while loop
+L2:
+addi $sp , $sp , 4 # UnAllocate Stack Area (Removing Block Statement Variables)
 addi $fp ,$sp , 4
 # End of Statement Block
 main_end :
