@@ -166,20 +166,60 @@ parser = Lark(grammar, parser="lalr", transformer=CodeGen(), debug=False)
 code = """
 
 int main() {
-    double a;
-    double b;
-    double c;
-    a = 2.5;
-    b = 1.1;
-    c = 1.1;
-    Print(a+b);
-    Print(a-b);
-    Print(b-a);
-    Print("-------------");
-    Print(a/b);
-    Print(b/a);
-    Print(b/b);
-    Print(b*c);
+    int a;
+    int b;
+    a = 10;
+    while ( a >= 0 ){
+        a = a-1;
+        if( a == 5 ){
+            break;
+        }
+        Print(a);
+    }
+    Print("Should Print from 9 to 6");
+    Print("-------------------");
+     a = 10;
+    while ( a >= 0 ){
+        a = a-1;
+        if( a == 3 )
+            break;
+        Print(a);
+    }
+    Print("Should Print from 9 to 4");
+    Print("-------------------");
+    a = 0;
+    while( a < 10 ){
+        b = 0;
+        while( b < 10 ){
+            Print(a);
+            Print(b);
+            Print("-----");
+            if( b == 4 ){
+                break;
+            }
+            b = b + 1;
+        }
+        a = a + 1;
+    }
+    Print("-------------------");
+    for( a = 0 ; a < 10 ; a = a + 1 ){
+        Print( a );
+        if( a == 7 ){
+            break;
+        }
+    }
+    Print("a should be : 0 -> 7");
+    Print("----------------------------");
+    for( a = 0 ; a < 10 ; a = a + 1 ){
+        for( b = 0 ; b < 10 ; b = b + 1 ){
+            Print(a);
+            Print(b);
+            if(b == 3){
+                break;
+            }
+            Print("----");
+        }
+    }
 }
 
 """

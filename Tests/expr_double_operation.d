@@ -5,6 +5,8 @@ int main() {
     a = 2.5;
     b = 1.1;
     c = 1.1;
+    Print(-a);
+    Print(--a);
     Print(a+b);
     Print(a-b);
     Print(b-a);

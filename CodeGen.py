@@ -465,7 +465,7 @@ class CodeGen(Transformer):
         return args[0]
     ############### Not ###############
     def expr_not_negative_not(self, args):
-        if args[0]['code'] != 'bool':
+        if args[0]['value_type'] != 'bool':
             raise Exception("Unhandled Type for Not !")
         code = args[0]['code']
         code += "lw $t0, 4($sp)\n"
@@ -649,13 +649,13 @@ class CodeGen(Transformer):
         expr = args[0]
         stmt1 = args[1]
         stmt2 = args[2]
+        elseLabel = self.label_generator()
+        endLabel = self.label_generator()
         code = "# Calculating IF Condition\n"
         code += expr['code']
         code += "# Loading IF Condition Result\n"
         code += "addi $sp , $sp , 4\n"
         code += "lw $t0 , 0($sp)\n"
-        elseLabel = self.label_generator()
-        endLabel = self.label_generator()
         code += "beqz $t0 , " + elseLabel + " # Jumping to else lable if expression is false\n"
         code += "# IF Statement Body\n"
         code += stmt1['code']
@@ -668,12 +668,12 @@ class CodeGen(Transformer):
     def us(self , args):
         expr = args[0]
         stmt = args[1]
+        endLabel = self.label_generator()
         code = "# Calculating IF Condition\n"
         code += expr['code']
         code += "# Loading IF Condition\n"
         code += "addi $sp , $sp , 4\n"
         code += "lw $t0 , 0($sp)\n"
-        endLabel = self.label_generator()
         code += "beqz $t0 , " + endLabel + " # Jumping to end lable if expression is false\n"
         code += "# IF Statement Body\n"
         code += stmt['code']
@@ -687,7 +687,7 @@ class CodeGen(Transformer):
         stmt = args[1]
         startLabel = self.label_generator()
         endLabel = self.label_generator()
-        stmt['code'] = stmt['code'].replace("@break@","j " + endLabel + " # Break from loop")
+        stmt['code'] = stmt['code'].replace("@break@","j " + endLabel + " # Break from loop while")
         code = startLabel + ": # Starting While Loop Body\n"
         code += "# Calculating While Condition\n"
         code += expr['code']
@@ -707,21 +707,25 @@ class CodeGen(Transformer):
         expr_condition = args[1]
         expr_step = args[2]
         stmt = args[3]
-        startLabel = self.label_generator
-        endLabel = self.label_generator
-        stmt['code'] = stmt['code'].replace("@break@","j " + endLabel + " # Break from loop")
-        code = "# Initialization Expression\n"
+        startLabel = self.label_generator()
+        endLabel = self.label_generator()
+        stmt['code'] = stmt['code'].replace("@break@","j " + endLabel + " # Break from loop for")
+        code = "# Initialization Expression of Loop for\n"
         code += expr_initialization['code']
+        if expr_initialization['code'] != '':
+            code += "addi $sp , $sp , 4 # pop init expr of loop for\n"
         code += startLabel + ": # Starting for Loop Body\n"
         code += "# Calculating For Loop Condition\n"
         code += expr_condition['code']
         code += "# Loading For Loop Condition Result\n"
         code += "addi $sp , $sp , 4\n"
         code += "lw $t0 , 0($sp)\n"
-        code += "beqz $t0 , " + endLabel + " # Jumping to end lable if expression is false\n"
+        code += "beqz $t0 , " + endLabel + " # Jumping to end lable if Condition Expression of for loop is false\n"
         code += stmt['code']
         code += "# Step Expression of For loop \n"
         code += expr_step['code']
+        if expr_step['code'] != '':
+            code += "addi $sp , $sp , 4 # pop step expr of loop for\n"
         code += "j " + startLabel + " # Jumping to beggining of while loop\n"
         code += endLabel + ":\n"
         return {'code' : code}
@@ -729,7 +733,7 @@ class CodeGen(Transformer):
     def stmt_break_stmt(self , args):
         return args[0]
     def break_stmt(self , args):
-        code = "@break@"
+        code = "@break@\n"
         return {'code' : code}
     ######################################################### Function #########################################################
     ############### Formals and Variables ###############

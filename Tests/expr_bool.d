@@ -5,6 +5,8 @@ int main() {
     a = true;
     b = false;
     c = false;
+    Print(!a);
+    Print(!!a);
     Print(a || b);
     Print(b || c);
     Print(a && b);

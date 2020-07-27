@@ -65,147 +65,135 @@ StringsInequality:
 main: # Start function body
 # Function Body :
 # Begin of Statement Block
-addi $sp , $sp , -12 # Allocate From Stack For Block Statement Variables
+addi $sp , $sp , -8 # Allocate From Stack For Block Statement Variables
 addi $fp , $sp , 4
 # Loading Address of ID : a
-addi $s7, $fp, 8
+addi $s7, $fp, 4
 sw $s7, 0($sp) # Push Address of a to Stack
 addi $sp, $sp, -4
-# Double Constant : 2.5
-li.s $f0, 2.5
-s.s $f0, 0($sp)
+# Int Constant : 10
+li $t0 , 10
+sw $t0 , 0($sp)
 addi $sp, $sp, -4
 # Assign Expression
 lw $t0 , 8($sp)
-l.s $f0 , 4($sp)
-s.s $f0 , 0($t0)
-s.s $f0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
 addi $sp , $sp , 4
 # End of Expression Optional
 addi $sp , $sp 4
-# Loading Address of ID : b
-addi $s7, $fp, 4
-sw $s7, 0($sp) # Push Address of b to Stack
-addi $sp, $sp, -4
-# Double Constant : 1.1
-li.s $f0, 1.1
-s.s $f0, 0($sp)
-addi $sp, $sp, -4
-# Assign Expression
-lw $t0 , 8($sp)
-l.s $f0 , 4($sp)
-s.s $f0 , 0($t0)
-s.s $f0 , 8($sp)
-addi $sp , $sp , 4
-# End of Expression Optional
-addi $sp , $sp 4
-# Loading Address of ID : c
-addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of c to Stack
-addi $sp, $sp, -4
-# Double Constant : 1.1
-li.s $f0, 1.1
-s.s $f0, 0($sp)
-addi $sp, $sp, -4
-# Assign Expression
-lw $t0 , 8($sp)
-l.s $f0 , 4($sp)
-s.s $f0 , 0($t0)
-s.s $f0 , 8($sp)
-addi $sp , $sp , 4
-# End of Expression Optional
-addi $sp , $sp 4
+L1: # Starting While Loop Body
+# Calculating While Condition
 # Loading Address of ID : a
-addi $s7, $fp, 8
+addi $s7, $fp, 4
 sw $s7, 0($sp) # Push Address of a to Stack
 addi $sp, $sp, -4
 # Load Value from Address of ID : a
 lw $t0, 4($sp)
 lw $t0 , 0($t0)
 sw $t0 , 4($sp) # Value of a Pushed to Stack
-# Loading Address of ID : b
-addi $s7, $fp, 4
-sw $s7, 0($sp) # Push Address of b to Stack
+# Int Constant : 0
+li $t0 , 0
+sw $t0 , 0($sp)
 addi $sp, $sp, -4
-# Load Value from Address of ID : b
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of b Pushed to Stack
-# Add Expression
-l.s $f0 , 8($sp)
-l.s $f1 , 4($sp)
-add.s $f0 , $f0 , $f1
-s.s $f0 , 8($sp)
+# Greater or Equal Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sge $t0 , $t0 , $t1
+sw $t0 , 8($sp)
 addi $sp , $sp , 4
-# Print : 
-addi $sp , $sp , 4 # Pop Expression of Print
-l.s $f12 , 0($sp)
-li $v0 , 2
-syscall
-li $a0 , '\n'
-li $v0 , 11
-syscall
+# Loading While Condition Result
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L2 # Jumping to end lable if expression is false
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
 # Loading Address of ID : a
-addi $s7, $fp, 8
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Loading Address of ID : a
+addi $s7, $fp, 4
 sw $s7, 0($sp) # Push Address of a to Stack
 addi $sp, $sp, -4
 # Load Value from Address of ID : a
 lw $t0, 4($sp)
 lw $t0 , 0($t0)
 sw $t0 , 4($sp) # Value of a Pushed to Stack
-# Loading Address of ID : b
-addi $s7, $fp, 4
-sw $s7, 0($sp) # Push Address of b to Stack
+# Int Constant : 1
+li $t0 , 1
+sw $t0 , 0($sp)
 addi $sp, $sp, -4
-# Load Value from Address of ID : b
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of b Pushed to Stack
 # Sub Expression
-l.s $f0 , 8($sp)
-l.s $f1 , 4($sp)
-sub.s $f0 , $f0 , $f1
-s.s $f0 , 8($sp)
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sub $t0 , $t0 , $t1
+sw $t0 , 8($sp)
 addi $sp , $sp , 4
-# Print : 
-addi $sp , $sp , 4 # Pop Expression of Print
-l.s $f12 , 0($sp)
-li $v0 , 2
-syscall
-li $a0 , '\n'
-li $v0 , 11
-syscall
-# Loading Address of ID : b
-addi $s7, $fp, 4
-sw $s7, 0($sp) # Push Address of b to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : b
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+# End of Expression Optional
+addi $sp , $sp 4
+# Calculating IF Condition
 # Loading Address of ID : a
-addi $s7, $fp, 8
+addi $s7, $fp, 4
 sw $s7, 0($sp) # Push Address of a to Stack
 addi $sp, $sp, -4
 # Load Value from Address of ID : a
 lw $t0, 4($sp)
 lw $t0 , 0($t0)
 sw $t0 , 4($sp) # Value of a Pushed to Stack
-# Sub Expression
-l.s $f0 , 8($sp)
-l.s $f1 , 4($sp)
-sub.s $f0 , $f0 , $f1
-s.s $f0 , 8($sp)
+# Int Constant : 5
+li $t0 , 5
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Equal Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+seq $t0 , $t0 , $t1
+sw $t0 , 8($sp)
 addi $sp , $sp , 4
+# Loading IF Condition
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L0 # Jumping to end lable if expression is false
+# IF Statement Body
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+j L2 # Break from loop while
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+L0:
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
 # Print : 
 addi $sp , $sp , 4 # Pop Expression of Print
-l.s $f12 , 0($sp)
-li $v0 , 2
+lw $a0 , 0($sp)
+li $v0 , 1
 syscall
 li $a0 , '\n'
 li $v0 , 11
 syscall
-# String Constant : "-------------"
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+j L1 # Jumping to beggining of while loop
+L2:
+# String Constant : "Should Print from 9 to 6"
 la $t0, D0
 sw $t0, 0($sp)
 addi $sp, $sp, -4
@@ -217,127 +205,789 @@ syscall
 li $a0 , '\n'
 li $v0 , 11
 syscall
+# String Constant : "-------------------"
+la $t0, D1
+sw $t0, 0($sp)
+addi $sp, $sp, -4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
 # Loading Address of ID : a
-addi $s7, $fp, 8
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Int Constant : 10
+li $t0 , 10
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+# End of Expression Optional
+addi $sp , $sp 4
+L4: # Starting While Loop Body
+# Calculating While Condition
+# Loading Address of ID : a
+addi $s7, $fp, 4
 sw $s7, 0($sp) # Push Address of a to Stack
 addi $sp, $sp, -4
 # Load Value from Address of ID : a
 lw $t0, 4($sp)
 lw $t0 , 0($t0)
 sw $t0 , 4($sp) # Value of a Pushed to Stack
-# Loading Address of ID : b
-addi $s7, $fp, 4
-sw $s7, 0($sp) # Push Address of b to Stack
+# Int Constant : 0
+li $t0 , 0
+sw $t0 , 0($sp)
 addi $sp, $sp, -4
-# Load Value from Address of ID : b
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of b Pushed to Stack
-# Div Expression
-l.s $f0 , 8($sp)
-l.s $f1 , 4($sp)
-div.s $f0 , $f0 , $f1
-s.s $f0 , 8($sp)
+# Greater or Equal Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sge $t0 , $t0 , $t1
+sw $t0 , 8($sp)
 addi $sp , $sp , 4
-# Print : 
-addi $sp , $sp , 4 # Pop Expression of Print
-l.s $f12 , 0($sp)
-li $v0 , 2
-syscall
-li $a0 , '\n'
-li $v0 , 11
-syscall
-# Loading Address of ID : b
-addi $s7, $fp, 4
-sw $s7, 0($sp) # Push Address of b to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : b
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Loading While Condition Result
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L5 # Jumping to end lable if expression is false
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
 # Loading Address of ID : a
-addi $s7, $fp, 8
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Loading Address of ID : a
+addi $s7, $fp, 4
 sw $s7, 0($sp) # Push Address of a to Stack
 addi $sp, $sp, -4
 # Load Value from Address of ID : a
 lw $t0, 4($sp)
 lw $t0 , 0($t0)
 sw $t0 , 4($sp) # Value of a Pushed to Stack
-# Div Expression
-l.s $f0 , 8($sp)
-l.s $f1 , 4($sp)
-div.s $f0 , $f0 , $f1
-s.s $f0 , 8($sp)
+# Int Constant : 1
+li $t0 , 1
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Sub Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sub $t0 , $t0 , $t1
+sw $t0 , 8($sp)
 addi $sp , $sp , 4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+# End of Expression Optional
+addi $sp , $sp 4
+# Calculating IF Condition
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Int Constant : 3
+li $t0 , 3
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Equal Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+seq $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Loading IF Condition
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L3 # Jumping to end lable if expression is false
+# IF Statement Body
+j L5 # Break from loop while
+L3:
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
 # Print : 
 addi $sp , $sp , 4 # Pop Expression of Print
-l.s $f12 , 0($sp)
-li $v0 , 2
+lw $a0 , 0($sp)
+li $v0 , 1
 syscall
 li $a0 , '\n'
 li $v0 , 11
 syscall
-# Loading Address of ID : b
-addi $s7, $fp, 4
-sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+j L4 # Jumping to beggining of while loop
+L5:
+# String Constant : "Should Print from 9 to 4"
+la $t0, D2
+sw $t0, 0($sp)
 addi $sp, $sp, -4
-# Load Value from Address of ID : b
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of b Pushed to Stack
-# Loading Address of ID : b
-addi $s7, $fp, 4
-sw $s7, 0($sp) # Push Address of b to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : b
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of b Pushed to Stack
-# Div Expression
-l.s $f0 , 8($sp)
-l.s $f1 , 4($sp)
-div.s $f0 , $f0 , $f1
-s.s $f0 , 8($sp)
-addi $sp , $sp , 4
 # Print : 
 addi $sp , $sp , 4 # Pop Expression of Print
-l.s $f12 , 0($sp)
-li $v0 , 2
+lw $a0 , 0($sp)
+li $v0 , 4
 syscall
 li $a0 , '\n'
 li $v0 , 11
 syscall
-# Loading Address of ID : b
-addi $s7, $fp, 4
-sw $s7, 0($sp) # Push Address of b to Stack
+# String Constant : "-------------------"
+la $t0, D3
+sw $t0, 0($sp)
 addi $sp, $sp, -4
-# Load Value from Address of ID : b
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Int Constant : 0
+li $t0 , 0
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+# End of Expression Optional
+addi $sp , $sp 4
+L9: # Starting While Loop Body
+# Calculating While Condition
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
 lw $t0, 4($sp)
 lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of b Pushed to Stack
-# Loading Address of ID : c
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Int Constant : 10
+li $t0 , 10
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Less Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+slt $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Loading While Condition Result
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L10 # Jumping to end lable if expression is false
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+# Loading Address of ID : b
 addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of c to Stack
+sw $s7, 0($sp) # Push Address of b to Stack
 addi $sp, $sp, -4
-# Load Value from Address of ID : c
+# Int Constant : 0
+li $t0 , 0
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+# End of Expression Optional
+addi $sp , $sp 4
+L7: # Starting While Loop Body
+# Calculating While Condition
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
 lw $t0, 4($sp)
 lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of c Pushed to Stack
-# Mul Expression
-l.s $f0 , 8($sp)
-l.s $f1 , 4($sp)
-mul.s $f0 , $f0 , $f1
-s.s $f0 , 8($sp)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Int Constant : 10
+li $t0 , 10
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Less Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+slt $t0 , $t0 , $t1
+sw $t0 , 8($sp)
 addi $sp , $sp , 4
+# Loading While Condition Result
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L8 # Jumping to end lable if expression is false
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
 # Print : 
 addi $sp , $sp , 4 # Pop Expression of Print
-l.s $f12 , 0($sp)
-li $v0 , 2
+lw $a0 , 0($sp)
+li $v0 , 1
 syscall
 li $a0 , '\n'
 li $v0 , 11
 syscall
-addi $sp , $sp , 12 # UnAllocate Stack Area (Removing Block Statement Variables)
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# String Constant : "-----"
+la $t0, D4
+sw $t0, 0($sp)
+addi $sp, $sp, -4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Calculating IF Condition
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Int Constant : 4
+li $t0 , 4
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Equal Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+seq $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Loading IF Condition
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L6 # Jumping to end lable if expression is false
+# IF Statement Body
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+j L8 # Break from loop while
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+L6:
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Int Constant : 1
+li $t0 , 1
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Add Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+add $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+# End of Expression Optional
+addi $sp , $sp 4
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+j L7 # Jumping to beggining of while loop
+L8:
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Int Constant : 1
+li $t0 , 1
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Add Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+add $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+# End of Expression Optional
+addi $sp , $sp 4
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+j L9 # Jumping to beggining of while loop
+L10:
+# String Constant : "-------------------"
+la $t0, D5
+sw $t0, 0($sp)
+addi $sp, $sp, -4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Initialization Expression of Loop for
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Int Constant : 0
+li $t0 , 0
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+addi $sp , $sp , 4 # pop init expr of loop for
+L12: # Starting for Loop Body
+# Calculating For Loop Condition
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Int Constant : 10
+li $t0 , 10
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Less Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+slt $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Loading For Loop Condition Result
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L13 # Jumping to end lable if Condition Expression of for loop is false
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Calculating IF Condition
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Int Constant : 7
+li $t0 , 7
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Equal Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+seq $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Loading IF Condition
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L11 # Jumping to end lable if expression is false
+# IF Statement Body
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+j L13 # Break from loop for
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+L11:
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+# Step Expression of For loop 
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Int Constant : 1
+li $t0 , 1
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Add Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+add $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+addi $sp , $sp , 4 # pop step expr of loop for
+j L12 # Jumping to beggining of while loop
+L13:
+# String Constant : "a should be : 0 -> 7"
+la $t0, D6
+sw $t0, 0($sp)
+addi $sp, $sp, -4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# String Constant : "----------------------------"
+la $t0, D7
+sw $t0, 0($sp)
+addi $sp, $sp, -4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Initialization Expression of Loop for
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Int Constant : 0
+li $t0 , 0
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+addi $sp , $sp , 4 # pop init expr of loop for
+L17: # Starting for Loop Body
+# Calculating For Loop Condition
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Int Constant : 10
+li $t0 , 10
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Less Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+slt $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Loading For Loop Condition Result
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L18 # Jumping to end lable if Condition Expression of for loop is false
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+# Initialization Expression of Loop for
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Int Constant : 0
+li $t0 , 0
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+addi $sp , $sp , 4 # pop init expr of loop for
+L15: # Starting for Loop Body
+# Calculating For Loop Condition
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Int Constant : 10
+li $t0 , 10
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Less Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+slt $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Loading For Loop Condition Result
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L16 # Jumping to end lable if Condition Expression of for loop is false
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Calculating IF Condition
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Int Constant : 3
+li $t0 , 3
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Equal Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+seq $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Loading IF Condition
+addi $sp , $sp , 4
+lw $t0 , 0($sp)
+beqz $t0 , L14 # Jumping to end lable if expression is false
+# IF Statement Body
+# Begin of Statement Block
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
+addi $fp , $sp , 4
+j L16 # Break from loop for
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+L14:
+# String Constant : "----"
+la $t0, D8
+sw $t0, 0($sp)
+addi $sp, $sp, -4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+# Step Expression of For loop 
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Loading Address of ID : b
+addi $s7, $fp, 0
+sw $s7, 0($sp) # Push Address of b to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : b
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of b Pushed to Stack
+# Int Constant : 1
+li $t0 , 1
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Add Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+add $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+addi $sp , $sp , 4 # pop step expr of loop for
+j L15 # Jumping to beggining of while loop
+L16:
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
+addi $fp ,$sp , 4
+# End of Statement Block
+# Step Expression of For loop 
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Loading Address of ID : a
+addi $s7, $fp, 4
+sw $s7, 0($sp) # Push Address of a to Stack
+addi $sp, $sp, -4
+# Load Value from Address of ID : a
+lw $t0, 4($sp)
+lw $t0 , 0($t0)
+sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Int Constant : 1
+li $t0 , 1
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+# Add Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+add $t0 , $t0 , $t1
+sw $t0 , 8($sp)
+addi $sp , $sp , 4
+# Assign Expression
+lw $t0 , 8($sp)
+lw $t1 , 4($sp)
+sw $t1 , 0($t0)
+sw $t1 , 8($sp)
+addi $sp , $sp , 4
+addi $sp , $sp , 4 # pop step expr of loop for
+j L17 # Jumping to beggining of while loop
+L18:
+addi $sp , $sp , 8 # UnAllocate Stack Area (Removing Block Statement Variables)
 addi $fp ,$sp , 4
 # End of Statement Block
 main_end :
@@ -348,7 +998,15 @@ jr $ra
 
 
 .data
-D0: .asciiz "-------------"
+D0: .asciiz "Should Print from 9 to 6"
+D1: .asciiz "-------------------"
+D2: .asciiz "Should Print from 9 to 4"
+D3: .asciiz "-------------------"
+D4: .asciiz "-----"
+D5: .asciiz "-------------------"
+D6: .asciiz "a should be : 0 -> 7"
+D7: .asciiz "----------------------------"
+D8: .asciiz "----"
 str_false : .asciiz "false" 
 str_true : .asciiz "true" 
 str_bool : .word str_false , str_true

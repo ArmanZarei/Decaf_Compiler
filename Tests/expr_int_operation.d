@@ -5,6 +5,8 @@ int main() {
     a = 7;
     b = 13;
     c = 3;
+    Print(-a);
+    Print(--a);
     Print(a*c);
     Print(a/3);
     Print(1/3);
