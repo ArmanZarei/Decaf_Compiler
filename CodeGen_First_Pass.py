@@ -8,9 +8,22 @@ class Cg(Transformer):
             {'name' : 'itob' , 'type' : 'bool'},
             {'name' : 'btoi' , 'type' : 'int'}
         ]
+        self.Global_Variables = []
 
     def get_functions(self):
         return self.Functions
+    def get_global_vars(self):
+        return self.Global_Variables
+    ############# Global Variables #############
+    def decl_variable_decl(self, args):
+        self.Global_Variables.append(args[0])
+    def variable_decl(self , args):
+        return args[0]
+    def variable(self, args):
+        id = args[1].children[0]
+        type = args[0]
+        return {'id' : id , 'type' : type}
+
     ############# Types #############
     def type_int(self, args):
         return "int"

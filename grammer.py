@@ -10,7 +10,7 @@ program: decl decl_more -> program
 decl_more: decl decl_more -> decl_more
     | -> decl_more_empty
 
-decl: variable_decl
+decl: variable_decl -> decl_variable_decl
     | function_decl -> decl_function_decl
     | class_decl
     | interface_decl
@@ -166,25 +166,13 @@ COMMENT: "//" /(.)+/ NEWLINE
 
 code = """
 
-int main() {
-    Print( dtoi(2.3) );
-    Print( dtoi(2.45) );
-    Print( dtoi(2.5) );
-    Print( dtoi(2.51) );
-    Print( dtoi(2.55) );
-    Print( dtoi(2.99) );
-    Print("------------");
-    Print( itod(5) );
-    Print( btoi(true) );
-    Print( btoi(false) );
-    Print( itob(8) );
-    Print( itob(0) );
-}
-
 """
 
 CodeGen_First_Pass = Cg()
 parser_first_pass = Lark(grammar , parser="lalr" , transformer=CodeGen_First_Pass , debug=False)
 parser_first_pass.parse(code)
-parser = Lark(grammar, parser="lalr", transformer=CodeGen(CodeGen_First_Pass.get_functions()), debug=False)
+parser = Lark(grammar,
+              parser="lalr",
+              transformer=CodeGen(CodeGen_First_Pass.get_functions(),CodeGen_First_Pass.get_global_vars()),
+              debug=False)
 parser.parse(code)

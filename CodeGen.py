@@ -5,25 +5,32 @@ import re
 
 
 class Stack:
-    def __init__(self):
+    def __init__(self , globalVariables):
         self.stack = []
-
-    def getIndex(self, name):
-        for i in range(len(self.stack)-1,-1,-1):
-            if self.stack[i].name == name:
-                return len(self.stack) - i - 1
-        raise Exception("No such variable name : " + name)
+        self.globalVariables = []
+        for var in globalVariables:
+            self.globalVariables.append(Var(var['id'],var['type']))
 
     def getVar(self, name):
         for i in range(len(self.stack)-1,-1,-1):
             if self.stack[i].name == name:
                 return self.stack[i]
+        # TODO : Should implement Class Variables Here ...
+        for i in range(len(self.globalVariables)-1,-1,-1):
+            if self.globalVariables[i].name == name:
+                return self.globalVariables[i]
         raise Exception("No such variable name : " + name)
 
     def getAddress(self , name):
         for i in range(len(self.stack)-1,-1,-1):
             if self.stack[i].name == name:
-                code = "addi $s7, $fp, " + str((len(self.stack) - i - 1) * 4) + "\n"
+                code = "addi $s7 , $fp , " + str((len(self.stack) - i - 1) * 4) + "\n"
+                return code
+        # TODO : Should implement Class Variables Here ...
+        for i in range(len(self.globalVariables)-1,-1,-1):
+            if self.globalVariables[i].name == name:
+                code = "# Loading Global Variable : " + name + "\n"
+                code += "la $s7 , data_" + name + "\n"
                 return code
         raise Exception("No such variable name : " + name)
 
@@ -41,13 +48,14 @@ class Var:
 
 
 class CodeGen(Transformer):
-    def __init__(self,functions):
+    def __init__(self,functions,globalVariables):
         self.label_num = 0
         self.data_name_num = 0
         self.break_num = 0
         self.data_code = ''
-        self.Stack = Stack()
+        self.Stack = Stack(globalVariables)
         self.Functions = functions
+        self.dataCodeGlobalVariables(globalVariables)
 
     def function_type(self , name):
         for function in self.Functions:
@@ -66,6 +74,14 @@ class CodeGen(Transformer):
             if item['name'] == name:
                 return item['count']
         raise Exception("no label found for " + name)
+
+    def dataCodeGlobalVariables(self , vars):
+        for var in vars:
+            if var['type'] == 'double':
+                self.data_code += "data_" + var['id'] + " : .float 0.0\n"
+            else:
+                self.data_code += "data_" + var['id'] + " : .word 0\n"
+
     ################################################### Assets ###################################################
     def label_generator(self):
         newLabel = "L" + str(self.label_num)
@@ -120,6 +136,8 @@ class CodeGen(Transformer):
         return {'id' : id , 'type' : type}
     def variable_decl(self, args):
         return args[0]
+    def decl_variable_decl(self , args):
+        return {'code' : ''}
     ############# Types #############
     def type_int(self, args):
         return "int"
@@ -605,7 +623,6 @@ class CodeGen(Transformer):
     ############### Left Value ID ###############
     def left_value_id(self, args):
         name = args[0].children[0].value
-        index = self.Stack.getIndex(name)
         value_type = self.Stack.getVar(name).type
         code = "# Loading Address of ID : " + name + "\n"
         code += self.Stack.getAddress(name)
