@@ -129,7 +129,7 @@ expr_atomic: constant -> expr_atomic_constant
 
 left_value: id -> left_value_id
     | expr_atomic "." id
-    | expr_atomic "[" expr "]"
+    | expr_atomic "[" expr "]" -> left_value_array_access
 
 call: id "(" actuals ")" -> call
     | expr_atomic "."  id "(" actuals ")"
@@ -163,9 +163,8 @@ COMMENT: "//" /(.)+/ NEWLINE
 
 """
 
-
 code = """
-
+    
 """
 
 CodeGen_First_Pass = Cg()

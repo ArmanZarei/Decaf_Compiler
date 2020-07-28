@@ -148,7 +148,7 @@ class CodeGen(Transformer):
     def type_string(self, args):
         return "string"
     def type_array(self, args):
-        return args[0]
+        return args[0] + "[]"
     ############### Variables of Block Statement ###############
     def variable_decls_empty(self, args):
         return {'variable_count' : 0}
@@ -184,17 +184,20 @@ class CodeGen(Transformer):
         if args[0]['value_type'] != args[1]['value_type']:
             raise Exception("Types of Right Hand Side of Assign is not the same as Left Side")
         value_type = args[0]['value_type']
-        code = args[0]['code'] + args[1]['code']
-        code += "# Assign Expression\n"
+        code = "# Left Hand Side Assign\n"
+        code += args[0]['code']
+        code += "# Right Hand Size Assign\n"
+        code += args[1]['code']
+        code += "# Assign Right Side to Left\n"
         code += "lw $t0 , 8($sp)\n"
-        if value_type == 'int' or value_type == 'bool' or value_type == 'string':
-            code += "lw $t1 , 4($sp)\n"
-            code += "sw $t1 , 0($t0)\n"
-            code += "sw $t1 , 8($sp)\n"
-        else:
+        if value_type == 'double':
             code += "l.s $f0 , 4($sp)\n"
             code += "s.s $f0 , 0($t0)\n"
             code += "s.s $f0 , 8($sp)\n"
+        else:
+            code += "lw $t1 , 4($sp)\n"
+            code += "sw $t1 , 0($t0)\n"
+            code += "sw $t1 , 8($sp)\n"
         code += "addi $sp , $sp , 4\n"
         return {'code' : code,
                 'value_type' : value_type}
@@ -548,23 +551,50 @@ class CodeGen(Transformer):
     ######################################################### Atomic Expressions #########################################################
     ############### Left Value ###############
     def expr_atomic_left_value(self, args):
-        code = "# Load Value from Address of ID : " + args[0]['name'] + "\n"
+        code = "# Loading Address of Array"
+        if 'name' in args[0]:
+            code = "# Load Value from Address of ID : " + args[0]['name'] + "\n"
         code += "lw $t0, 4($sp)\n"
         code += "lw $t0 , 0($t0)\n"
-        code += "sw $t0 , 4($sp) # Value of " + args[0]['name'] + " Pushed to Stack\n"
+        code += "sw $t0 , 4($sp) "
+        if 'name' in args[0]:
+            code += "# Value of " + args[0]['name'] + " Pushed to Stack\n"
+        else:
+            code += "# Value of Array address Pushed to Stack\n"
         args[0]['code'] += code
         return args[0]
-    ############### NewArray ###############
+    ############### New Array ###############
     def expr_atomic_new_array(self, args):
-        code = "# NewArray of Type : " + args[1] + "\n"
+        code = "# Expression of Array Size\n"
+        code += args[0]['code']
+        code += "# NewArray of Type : " + args[1] + "\n"
         code += "lw $t0, 4($sp)\n"
-        code += "li $t1, 4\n"
-        code += "mul $a0, $t0, $t1\n"
+        code += "addi $t0 , $t0 , 1 # Allocate space for Storing Array Length\n"
+        code += "sll $a0 , $t0 , 2\n"
         code += "li $v0, 9\n"
         code += "syscall\n"
+        code += "addi $t0 , $t0 , -1 # Array Size\n"
+        code += "sw $t0 , 0($v0) # Storing Array size in index 0\n"
         code += "sw $v0, 4($sp)\n"
-        return {'code': args[0]['code'] + code,
-                'value_type': args[1]}
+        return {'code': code,
+                'value_type': args[1] + "[]"}
+    ############### Accessing Array ###############
+    def left_value_array_access(self , args):
+        base_arr = args[0]
+        index = args[1]
+        code = "# Get Array index\n"
+        code += "# Base Address of Array\n"
+        code += base_arr['code']
+        code += "# Expression index of Array\n"
+        code += index['code']
+        code += "lw $t0 , 8($sp) # base Address of Array\n"
+        code += "lw $t1 , 4($sp) # index of Array\n"
+        code += "addi $sp , $sp , 4\n"
+        code += "addi $t1 , $t1 , 1\n"
+        code += "sll $t1 , $t1 , 2\n"
+        code += "add $t0 , $t0 , $t1\n"
+        code += "sw $t0 , 4($sp) # Pushing address of arr[index] result to Stack\n"
+        return {'code' : code , 'value_type' : base_arr['value_type'][0:-2]}
     ############### Read Integer ###############
     def expr_atomic_read_integer(self, args):
         code = "# Read Integer : \n"
@@ -611,9 +641,6 @@ class CodeGen(Transformer):
         else:
             code += "lw $a0 , 0($sp)\n"
             code += "li $v0 , 1\n"
-        code += "syscall\n"
-        code += "li $a0 , '\\n'\n"
-        code += "li $v0 , 11\n"
         code += "syscall\n"
         return {'code': code}
     ############### Call ###############
