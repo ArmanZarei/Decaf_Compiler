@@ -59,4 +59,38 @@ StringsInequality:
 	nor $v0 , $v0 , $v0
 	addi $v0 , $v0 , 2 # All 1's from bit[1] to left becomes Zero
 	jr $ra
+
+itod:
+	lw $t0 , 4($sp)
+    mtc1 $t0, $f12
+    cvt.s.w $f12, $f12
+    mov.s $f0 , $f12
+	jr $ra
+
+dtoi:
+	l.s $f0 , 4($sp)
+	cvt.w.s $f1,$f0
+    mfc1 $v0,$f1 # $v0 is floor of double
+    # Convert $v0 to double
+    mtc1 $v0 , $f1
+    cvt.s.w $f1 , $f1
+    # get decimal
+    sub.s $f0 , $f0 , $f1
+    li.s $f1 , 0.5
+    c.le.s $f0 , $f1
+    bc1t end_conversion_dtoi
+    addi $v0 , $v0 , 1
+    end_conversion_dtoi:
+	jr $ra
+
+itob:
+	lw $v0 , 4($sp)
+	beqz $v0 , end_conversion_itob
+	li $v0 , 1
+	end_conversion_itob:
+	jr $ra
+
+btoi:
+    lw $v0 , 4($sp)
+	jr $ra
 #-------------------------------------------- Program --------------------------------------------#

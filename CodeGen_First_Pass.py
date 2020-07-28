@@ -2,7 +2,12 @@ from lark import Transformer
 
 class Cg(Transformer):
     def __init__(self):
-        self.Functions = []
+        self.Functions = [
+            {'name' : 'itod' , 'type' : 'double'},
+            {'name' : 'dtoi' , 'type' : 'int'},
+            {'name' : 'itob' , 'type' : 'bool'},
+            {'name' : 'btoi' , 'type' : 'int'}
+        ]
 
     def get_functions(self):
         return self.Functions

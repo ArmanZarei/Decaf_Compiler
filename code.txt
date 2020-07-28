@@ -61,64 +61,66 @@ StringsInequality:
 	nor $v0 , $v0 , $v0
 	addi $v0 , $v0 , 2 # All 1's from bit[1] to left becomes Zero
 	jr $ra
+
+itod:
+	lw $t0 , 4($sp)
+    mtc1 $t0, $f12
+    cvt.s.w $f12, $f12
+    mov.s $f0 , $f12
+	jr $ra
+
+dtoi:
+	l.s $f0 , 4($sp)
+	cvt.w.s $f1,$f0
+    mfc1 $v0,$f1 # $v0 is floor of double
+    # Convert $v0 to double
+    mtc1 $v0 , $f1
+    cvt.s.w $f1 , $f1
+    # get decimal
+    sub.s $f0 , $f0 , $f1
+    li.s $f1 , 0.5
+    c.le.s $f0 , $f1
+    bc1t end_conversion_dtoi
+    addi $v0 , $v0 , 1
+    end_conversion_dtoi:
+	jr $ra
+
+itob:
+	lw $v0 , 4($sp)
+	beqz $v0 , end_conversion_itob
+	li $v0 , 1
+	end_conversion_itob:
+	jr $ra
+
+btoi:
+    lw $v0 , 4($sp)
+	jr $ra
 #-------------------------------------------- Program --------------------------------------------#
 main: # Start function
 addi $s5 , $sp , 0 # Storing $sp of function at beginning in $s5
 # Function Body :
 # Begin of Statement Block
-addi $sp , $sp , -4 # Allocate From Stack For Block Statement Variables
+addi $sp , $sp , -0 # Allocate From Stack For Block Statement Variables
 addi $fp , $sp , 4
-# Initialization Expression of Loop for
-# Loading Address of ID : a
-addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of a to Stack
+# Storing Frame Pointer and Return Address Before Calling the function : dtoi
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
+# Double Constant : 2.3
+li.s $f0, 2.3
+s.s $f0, 0($sp)
 addi $sp, $sp, -4
-# Int Constant : 0
-li $t0 , 0
-sw $t0 , 0($sp)
-addi $sp, $sp, -4
-# Assign Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-sw $t1 , 0($t0)
-sw $t1 , 8($sp)
+jal dtoi # Calling Function
+# Pop Arguments of function
 addi $sp , $sp , 4
-addi $sp , $sp , 4 # pop init expr of loop for
-L1: # Starting for Loop Body
-# Calculating For Loop Condition
-# Loading Address of ID : a
-addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of a to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : a
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of a Pushed to Stack
-# Int Constant : 10
-li $t0 , 10
-sw $t0 , 0($sp)
-addi $sp, $sp, -4
-# Less Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-slt $t0 , $t0 , $t1
-sw $t0 , 8($sp)
-addi $sp , $sp , 4
-# Loading For Loop Condition Result
-addi $sp , $sp , 4
-lw $t0 , 0($sp)
-beqz $t0 , L2 # Jumping to end label if Condition Expression of for loop is false
-# Begin of Statement Block
-addi $sp , $sp , -12 # Allocate From Stack For Block Statement Variables
-addi $fp , $sp , 4
-# Loading Address of ID : a
-addi $s7, $fp, 12
-sw $s7, 0($sp) # Push Address of a to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : a
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of a Pushed to Stack
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+sw $v0 , 4($sp) # Push Return Value from function to Stack
 # Print : 
 addi $sp , $sp , 4 # Pop Expression of Print
 lw $a0 , 0($sp)
@@ -127,76 +129,297 @@ syscall
 li $a0 , '\n'
 li $v0 , 11
 syscall
-# Calculating IF Condition
-# Loading Address of ID : a
-addi $s7, $fp, 12
-sw $s7, 0($sp) # Push Address of a to Stack
+# Storing Frame Pointer and Return Address Before Calling the function : dtoi
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
+# Double Constant : 2.45
+li.s $f0, 2.45
+s.s $f0, 0($sp)
 addi $sp, $sp, -4
-# Load Value from Address of ID : a
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of a Pushed to Stack
+jal dtoi # Calling Function
+# Pop Arguments of function
+addi $sp , $sp , 4
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+sw $v0 , 4($sp) # Push Return Value from function to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Storing Frame Pointer and Return Address Before Calling the function : dtoi
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
+# Double Constant : 2.5
+li.s $f0, 2.5
+s.s $f0, 0($sp)
+addi $sp, $sp, -4
+jal dtoi # Calling Function
+# Pop Arguments of function
+addi $sp , $sp , 4
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+sw $v0 , 4($sp) # Push Return Value from function to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Storing Frame Pointer and Return Address Before Calling the function : dtoi
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
+# Double Constant : 2.51
+li.s $f0, 2.51
+s.s $f0, 0($sp)
+addi $sp, $sp, -4
+jal dtoi # Calling Function
+# Pop Arguments of function
+addi $sp , $sp , 4
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+sw $v0 , 4($sp) # Push Return Value from function to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Storing Frame Pointer and Return Address Before Calling the function : dtoi
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
+# Double Constant : 2.55
+li.s $f0, 2.55
+s.s $f0, 0($sp)
+addi $sp, $sp, -4
+jal dtoi # Calling Function
+# Pop Arguments of function
+addi $sp , $sp , 4
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+sw $v0 , 4($sp) # Push Return Value from function to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Storing Frame Pointer and Return Address Before Calling the function : dtoi
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
+# Double Constant : 2.99
+li.s $f0, 2.99
+s.s $f0, 0($sp)
+addi $sp, $sp, -4
+jal dtoi # Calling Function
+# Pop Arguments of function
+addi $sp , $sp , 4
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+sw $v0 , 4($sp) # Push Return Value from function to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# String Constant : "------------"
+la $t0, D0
+sw $t0, 0($sp)
+addi $sp, $sp, -4
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Storing Frame Pointer and Return Address Before Calling the function : itod
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
 # Int Constant : 5
 li $t0 , 5
 sw $t0 , 0($sp)
 addi $sp, $sp, -4
-# Equal Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-seq $t0 , $t0 , $t1
-sw $t0 , 8($sp)
+jal itod # Calling Function
+# Pop Arguments of function
 addi $sp , $sp , 4
-# Loading IF Condition
-addi $sp , $sp , 4
-lw $t0 , 0($sp)
-beqz $t0 , L0 # Jumping to end label if expression is false
-# IF Statement Body
-# Begin of Statement Block
-addi $sp , $sp , -8 # Allocate From Stack For Block Statement Variables
-addi $fp , $sp , 4
-addi $sp , $sp , 20 # Pop elements before
-j L2 # Break from loop for
-
-addi $sp , $sp , 8 # UnAllocate Stack Area (Removing Block Statement Variables)
-addi $fp ,$sp , 4
-# End of Statement Block
-L0:
-addi $sp , $sp , 12 # UnAllocate Stack Area (Removing Block Statement Variables)
-addi $fp ,$sp , 4
-# End of Statement Block
-# Step Expression of For loop 
-# Loading Address of ID : a
-addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of a to Stack
-addi $sp, $sp, -4
-# Loading Address of ID : a
-addi $s7, $fp, 0
-sw $s7, 0($sp) # Push Address of a to Stack
-addi $sp, $sp, -4
-# Load Value from Address of ID : a
-lw $t0, 4($sp)
-lw $t0 , 0($t0)
-sw $t0 , 4($sp) # Value of a Pushed to Stack
-# Int Constant : 1
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+s.s $f0 , 4($sp) # Push Return Value from function to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+l.s $f12 , 0($sp)
+li $v0 , 2
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Storing Frame Pointer and Return Address Before Calling the function : btoi
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
+# Bool Constant : true
 li $t0 , 1
 sw $t0 , 0($sp)
 addi $sp, $sp, -4
-# Add Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-add $t0 , $t0 , $t1
-sw $t0 , 8($sp)
+jal btoi # Calling Function
+# Pop Arguments of function
 addi $sp , $sp , 4
-# Assign Expression
-lw $t0 , 8($sp)
-lw $t1 , 4($sp)
-sw $t1 , 0($t0)
-sw $t1 , 8($sp)
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+sw $v0 , 4($sp) # Push Return Value from function to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Storing Frame Pointer and Return Address Before Calling the function : btoi
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
+# Bool Constant : false
+li $t0, 0
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+jal btoi # Calling Function
+# Pop Arguments of function
 addi $sp , $sp , 4
-addi $sp , $sp , 4 # pop step expr of loop for
-j L1 # Jumping to beggining of while loop
-L2:
-addi $sp , $sp , 4 # UnAllocate Stack Area (Removing Block Statement Variables)
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+sw $v0 , 4($sp) # Push Return Value from function to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+li $v0 , 1
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Storing Frame Pointer and Return Address Before Calling the function : itob
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
+# Int Constant : 8
+li $t0 , 8
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+jal itob # Calling Function
+# Pop Arguments of function
+addi $sp , $sp , 4
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+sw $v0 , 4($sp) # Push Return Value from function to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+la $t0 , str_bool
+sll $a0 , $a0 , 2
+add $a0 , $a0 , $t0
+lw $a0 , 0($a0)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+# Storing Frame Pointer and Return Address Before Calling the function : itob
+addi $sp , $sp , -12
+sw $fp , 4($sp)
+sw $ra , 8($sp)
+sw $s5 , 12($sp)
+# Function Arguments
+# Int Constant : 0
+li $t0 , 0
+sw $t0 , 0($sp)
+addi $sp, $sp, -4
+jal itob # Calling Function
+# Pop Arguments of function
+addi $sp , $sp , 4
+# Load Back Frame Pointer and Return Address After Function call
+lw $fp , 4($sp)
+lw $ra , 8($sp)
+lw $s5 , 12($sp)
+addi $sp , $sp , 8
+sw $v0 , 4($sp) # Push Return Value from function to Stack
+# Print : 
+addi $sp , $sp , 4 # Pop Expression of Print
+lw $a0 , 0($sp)
+la $t0 , str_bool
+sll $a0 , $a0 , 2
+add $a0 , $a0 , $t0
+lw $a0 , 0($a0)
+li $v0 , 4
+syscall
+li $a0 , '\n'
+li $v0 , 11
+syscall
+addi $sp , $sp , 0 # UnAllocate Stack Area (Removing Block Statement Variables)
 addi $fp ,$sp , 4
 # End of Statement Block
 main_end :
@@ -204,6 +427,7 @@ jr $ra
 
 
 .data
+D0: .asciiz "------------"
 str_false : .asciiz "false" 
 str_true : .asciiz "true" 
 str_bool : .word str_false , str_true

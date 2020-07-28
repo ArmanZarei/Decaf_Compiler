@@ -166,23 +166,19 @@ COMMENT: "//" /(.)+/ NEWLINE
 
 code = """
 
-int fact( int a ){
-    if( a == 1 ){
-        return 1;
-    }
-    return a * fact( a - 1 );
-}
-
-int fib( int n ){
-    if ( n == 1 || n == 2 ){
-        return 1;
-    }
-    return fib( n-1 ) + fib( n - 2);
-}
-
 int main() {
-    Print( fact(4) );
-    Print( fib(8) );
+    Print( dtoi(2.3) );
+    Print( dtoi(2.45) );
+    Print( dtoi(2.5) );
+    Print( dtoi(2.51) );
+    Print( dtoi(2.55) );
+    Print( dtoi(2.99) );
+    Print("------------");
+    Print( itod(5) );
+    Print( btoi(true) );
+    Print( btoi(false) );
+    Print( itob(8) );
+    Print( itob(0) );
 }
 
 """
