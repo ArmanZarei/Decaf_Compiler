@@ -86,8 +86,11 @@ return_stmt: "return" expr_optional ";" -> return_stmt
 
 break_stmt: "break" ";" -> break_stmt
 
-print_stmt: "Print" "(" expr ")" ";" -> print_stmt
-expr_merged: expr expr_more
+print_stmt: "Print" "(" print_exprs ")" ";" -> print_stmt
+print_exprs: expr print_expr_more -> print_exprs
+print_expr_more: "," expr print_expr_more -> print_exprs
+    | -> print_expr_more_empty
+
 expr_more: "," expr expr_more -> expr_more
     | -> expr_more_empty
 
@@ -164,7 +167,10 @@ COMMENT: "//" /(.)+/ NEWLINE
 """
 
 code = """
-    
+int main(){
+    Print( 12 , " - " , 13);
+    Print( 151231 );
+}
 """
 
 CodeGen_First_Pass = Cg()

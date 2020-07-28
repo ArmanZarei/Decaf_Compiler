@@ -620,10 +620,15 @@ class CodeGen(Transformer):
         args[0]['break_labels'] = []
         return args[0]
     def print_stmt(self, args):
+        code = "li $a0 , '\\n'\n"
+        code += "li $v0 , 11\n"
+        code += "syscall\n"
+        return {'code' : args[0]['code'] + code}
+    def print_exprs(self , args):
         expr = args[0]
         expr_type = expr['value_type']
         code = expr['code']
-        code += "# Print : \n"
+        code += "# Print expr : \n"
         code += "addi $sp , $sp , 4 # Pop Expression of Print\n"
         if expr_type == "string":
             code += "lw $a0 , 0($sp)\n"
@@ -642,7 +647,9 @@ class CodeGen(Transformer):
             code += "lw $a0 , 0($sp)\n"
             code += "li $v0 , 1\n"
         code += "syscall\n"
-        return {'code': code}
+        return {'code': code + args[1]['code']}
+    def print_expr_more_empty(self , args):
+        return {'code' : ''}
     ############### Call ###############
     def expr_atomic_call(self , args):
         return args[0]
@@ -873,7 +880,6 @@ class CodeGen(Transformer):
         formals = args[2]
         stmt_block = args[3]
         label_end = functionName + "_end"
-        stmt_block['code'] = stmt_block['code'].replace("@return@","j " + label_end + " # Jump to end function ( return )\n")
         code = functionName + ": # Start function\n"
         code += "addi $s5 , $sp , 0 # Storing $sp of function at beginning in $s5\n"
         code += "# Function Body :\n"
@@ -882,11 +888,10 @@ class CodeGen(Transformer):
         code += "jr $ra\n"
         return {'code' : code}
     def function_decl_void(self , args):
-        functionName = args[0]
+        functionName = args[0].children[0]
         formals = args[1]
         stmt_block = args[2]
         label_end = functionName + "_end :\n"
-        stmt_block['code'] = stmt_block['code'].replace("@return@","j " + label_end + " # Jump to end function\n")
         code = functionName + ": # Start function body\n"
         code += "addi $s5 , $sp , 0 # Storing $sp of function at beginning in $s5\n"
         code += "addi $fp , $sp , 0 # Set Frame Pointer of function\n"
