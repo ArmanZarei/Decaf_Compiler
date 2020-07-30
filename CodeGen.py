@@ -2,6 +2,7 @@ import os
 from lark import Transformer
 import pprint
 import re
+from Class import Class
 
 
 class Stack:
@@ -12,21 +13,55 @@ class Stack:
             self.globalVariables.append(Var(var['id'],var['type']))
 
     def getVar(self, name):
+        # Searching in Local Scope of function
         for i in range(len(self.stack)-1,-1,-1):
             if self.stack[i].name == name:
                 return self.stack[i]
-        # TODO : Should implement Class Variables Here ...
+        # Searching in Class Properties ( if the function is defined in Class )
+        this = None
+        for i in range(len(self.stack) - 1, -1, -1):
+            if self.stack[i].name == "this":
+                this = self.stack[i]
+                break
+        if this != None:
+            c = Class.searchClass(this.type)
+            if c is None:
+                raise Exception("Class with name " + this.type + " not exists !")
+            if c.variableExists(name):
+                var = c.getVariable(name)
+                return Var(var['name'] , var['type'])
+        # Searching in Global Scope
         for i in range(len(self.globalVariables)-1,-1,-1):
             if self.globalVariables[i].name == name:
                 return self.globalVariables[i]
         raise Exception("No such variable name : " + name)
 
     def getAddress(self , name):
+        # Searching in Local Scope of function
         for i in range(len(self.stack)-1,-1,-1):
             if self.stack[i].name == name:
                 code = "addi $s7 , $fp , " + str((len(self.stack) - i - 1) * 4) + "\n"
                 return code
-        # TODO : Should implement Class Variables Here ...
+        # Searching in Class Properties ( if the function is defined in Class )
+        this = None
+        offsetThis = None
+        for i in range(len(self.stack) - 1, -1, -1):
+            if self.stack[i].name == "this":
+                this = self.stack[i]
+                offsetThis = len(self.stack) - i - 1
+                break
+        if this != None:
+            c = Class.searchClass(this.type)
+            if c is None:
+                raise Exception("Class with name " + this.type + " not exists !")
+            if c.variableExists(name):
+                offset = c.variableOffset(name)
+                code = "# Loading Class Variable : " + name + "\n"
+                code += "addi $s7 , $fp , " + str(offsetThis * 4) + "\n"
+                code += "lw $s7 , 0($s7)\n"
+                code += "addi $s7 , $s7 , " + str(offset) + " # add offset of " + name + " from base object pointer\n"
+                return code
+        # Searching in Global Scope
         for i in range(len(self.globalVariables)-1,-1,-1):
             if self.globalVariables[i].name == name:
                 code = "# Loading Global Variable : " + name + "\n"
@@ -41,6 +76,10 @@ class Stack:
         for i in range(size):
             self.stack.pop()
 
+    def log(self):
+        for var in self.stack:
+            pprint.pprint(var.name + " - " + var.type)
+
 class Var:
     def __init__(self, name, var_type):
         self.name = name
@@ -48,19 +87,45 @@ class Var:
 
 
 class CodeGen(Transformer):
-    def __init__(self,functions,globalVariables):
+    def __init__(self,functions,globalVariables,structure):
         self.label_num = 0
         self.data_name_num = 0
         self.break_num = 0
         self.data_code = ''
         self.Stack = Stack(globalVariables)
         self.Functions = functions
+        self.structure = structure
+        self.whereAmI = 0
         self.dataCodeGlobalVariables(globalVariables)
 
     def function_type(self , name):
+        # Search function if its defined in the class
+        if self.inClass():
+            this = self.Stack.getVar("this")
+            c = Class.searchClass(this.type)
+            if c is None:
+                raise Exception("Class with name " + this.type + " not exists !")
+            if c.methodExists(name):
+                return c.getMethod(name)['type']
+        # Search in global scope
         for function in self.Functions:
             if function['name'] == name:
                 return function['type']
+        raise Exception("function ( " + name + " ) not found !!!")
+
+    def getFunctionLabel(self , name):
+        # Search function if its defined in the class
+        if self.inClass():
+            this = self.Stack.getVar("this")
+            c = Class.searchClass(this.type)
+            if c is None:
+                raise Exception("Class with name " + this.type + " not exists !")
+            if c.methodExists(name):
+                return c.name + "_" + name
+        # Search in global scope
+        for function in self.Functions:
+            if function['name'] == name:
+                name
         raise Exception("function ( " + name + " ) not found !!!")
 
     def in_break_labels(self , arr , name):
@@ -82,6 +147,10 @@ class CodeGen(Transformer):
             else:
                 self.data_code += "data_" + var['id'] + " : .word 0\n"
 
+    def inClass(self):
+        if self.structure[self.whereAmI]['type'] == 'class':
+            return True
+        return False
     ################################################### Assets ###################################################
     def label_generator(self):
         newLabel = "L" + str(self.label_num)
@@ -111,10 +180,12 @@ class CodeGen(Transformer):
         code = '.text\n'
         code += '.globl main\n'
         code += default_functions
+        code += Class.getConstructors()
         code += args[0]['code']
         self.data_code += "str_false : .asciiz \"false\" \n"
         self.data_code += "str_true : .asciiz \"true\" \n"
         self.data_code += "str_bool : .word str_false , str_true\n"
+        self.data_code += Class.getVtables()
         self.log_code(code + "\n\n.data\n" + self.data_code)
         return args
     def program(self, args):
@@ -149,6 +220,8 @@ class CodeGen(Transformer):
         return "string"
     def type_array(self, args):
         return args[0] + "[]"
+    def type_id(self , args):
+        return args[0].children[0]
     ############### Variables of Block Statement ###############
     def variable_decls_empty(self, args):
         return {'variable_count' : 0}
@@ -181,7 +254,7 @@ class CodeGen(Transformer):
         return args[0]
     ############### Assign ###############
     def expr_assign(self, args):
-        if args[0]['value_type'] != args[1]['value_type']:
+        if args[0]['value_type'] != args[1]['value_type'] and not Class.areConvertable(args[0]['value_type'],args[1]['value_type']):
             raise Exception("Types of Right Hand Side of Assign is not the same as Left Side")
         value_type = args[0]['value_type']
         code = "# Left Hand Side Assign\n"
@@ -549,6 +622,41 @@ class CodeGen(Transformer):
     def expr_par_pass(self, args):
         return args[0]
     ######################################################### Atomic Expressions #########################################################
+    ############### New ###############
+    def expr_atomic_new(self, args):
+        id = args[0].children[0]
+        code = "# new object of type : " + id + "\n"
+        code += "sw $ra , 0($sp)\n"
+        code += "addi $sp , $sp , -4\n"
+        code += "jal " + id + "_Constructor\n"
+        code += "lw $ra , 4($sp)\n"
+        code += "sw $v0 , 4($sp) # Pushing address of object in Heap to Stack\n"
+        return {'code' : code, 'value_type' : id}
+    ############### This ###############
+    def expr_atomic_this(self , args):
+        code = "# Loading Address of : this\n"
+        code += self.Stack.getAddress('this')
+        code += "lw $s7 , 0($s7)\n"
+        code += "sw $s7 , 0($sp)\n"
+        code += "addi $sp , $sp , -4\n"
+        return {'code' : code , 'value_type' : self.Stack.getVar('this').type}
+    ############### Accessing Variable inside Object ###############
+    def left_value_obj_var(self , args):
+        expr_atomic = args[0]
+        varID = args[1].children[0]
+        obj_type = expr_atomic['value_type']
+        c = Class.searchClass(obj_type);
+        if c == None:
+            raise Exception("Trying to access an object of Type (" + obj_type + ") that the class does not exists")
+        if not c.variableExists(varID):
+            raise Exception("Trying to access a variable name (" + varID + ") inside class (" + obj_type + ") that does not exists")
+        varOffset = c.variableOffset(varID);
+        code = "# Loading Variable of Object\n"
+        code += expr_atomic['code']
+        code += "lw $t0 , 4($sp)\n"
+        code += "addi $t0 , $t0 , " + str(varOffset) + " # add offset of variable to object address\n"
+        code += "sw $t0 , 4($sp)\n"
+        return {'code' : code , 'value_type' : c.getVariable(varID)['type']}
     ############### Left Value ###############
     def expr_atomic_left_value(self, args):
         code = "# Loading Address of Array"
@@ -615,41 +723,6 @@ class CodeGen(Transformer):
         code += "addi $sp , $sp , 4\n"
         code += "sw $v0 , 4($sp)# Saving String Address ( Saved in Heap ) in Stack\n"
         return {'code': code, 'value_type': 'string'}
-    ############### Print ###############
-    def stmt_print_stmt(self, args):
-        args[0]['break_labels'] = []
-        return args[0]
-    def print_stmt(self, args):
-        code = "li $a0 , '\\n'\n"
-        code += "li $v0 , 11\n"
-        code += "syscall\n"
-        return {'code' : args[0]['code'] + code}
-    def print_exprs(self , args):
-        expr = args[0]
-        expr_type = expr['value_type']
-        code = expr['code']
-        code += "# Print expr : \n"
-        code += "addi $sp , $sp , 4 # Pop Expression of Print\n"
-        if expr_type == "string":
-            code += "lw $a0 , 0($sp)\n"
-            code += "li $v0 , 4\n"
-        elif expr_type == "double":
-            code += "l.s $f12 , 0($sp)\n"
-            code += "li $v0 , 2\n"
-        elif expr_type == "bool":
-            code += "lw $a0 , 0($sp)\n"
-            code += "la $t0 , str_bool\n"
-            code += "sll $a0 , $a0 , 2\n"
-            code += "add $a0 , $a0 , $t0\n"
-            code += "lw $a0 , 0($a0)\n"
-            code += "li $v0 , 4\n"
-        else:
-            code += "lw $a0 , 0($sp)\n"
-            code += "li $v0 , 1\n"
-        code += "syscall\n"
-        return {'code': code + args[1]['code']}
-    def print_expr_more_empty(self , args):
-        return {'code' : ''}
     ############### Call ###############
     def expr_atomic_call(self , args):
         return args[0]
@@ -737,6 +810,42 @@ class CodeGen(Transformer):
         return {'code': '' , 'break_labels' : []}
     def stmt_stmt_block(self, args):
         return args[0]
+
+    ############### Print ###############
+    def stmt_print_stmt(self, args):
+        args[0]['break_labels'] = []
+        return args[0]
+    def print_stmt(self, args):
+        code = "li $a0 , '\\n'\n"
+        code += "li $v0 , 11\n"
+        code += "syscall\n"
+        return {'code': args[0]['code'] + code}
+    def print_exprs(self, args):
+        expr = args[0]
+        expr_type = expr['value_type']
+        code = expr['code']
+        code += "# Print expr : \n"
+        code += "addi $sp , $sp , 4 # Pop Expression of Print\n"
+        if expr_type == "string":
+            code += "lw $a0 , 0($sp)\n"
+            code += "li $v0 , 4\n"
+        elif expr_type == "double":
+            code += "l.s $f12 , 0($sp)\n"
+            code += "li $v0 , 2\n"
+        elif expr_type == "bool":
+            code += "lw $a0 , 0($sp)\n"
+            code += "la $t0 , str_bool\n"
+            code += "sll $a0 , $a0 , 2\n"
+            code += "add $a0 , $a0 , $t0\n"
+            code += "lw $a0 , 0($a0)\n"
+            code += "li $v0 , 4\n"
+        else:
+            code += "lw $a0 , 0($sp)\n"
+            code += "li $v0 , 1\n"
+        code += "syscall\n"
+        return {'code': code + args[1]['code']}
+    def print_expr_more_empty(self, args):
+        return {'code': ''}
     ############### if Statement ###############
     def stmt_if_stmt(self , args):
         return args[0]
@@ -861,9 +970,13 @@ class CodeGen(Transformer):
         variables = [{'id' : variable['id'] , 'type' : variable['type']}] + more_variables['variables']
         for var in variables:
             self.Stack.push(Var(var['id'], var['type']))
-        pass
+        if self.inClass():
+            self.Stack.push(Var("this", self.structure[self.whereAmI]['name']))
+        return {'variable_count' : len(variables)}
     def formals_empty(self , args):
-        pass
+        if self.inClass():
+            self.Stack.push(Var("this",self.structure[self.whereAmI]['name']))
+        return {'variable_count' : 0}
     def more_variables(self , args):
         variable = args[0]
         variable_obj = [ {'type' : variable['type'], 'id' : variable['id']} ]
@@ -873,6 +986,7 @@ class CodeGen(Transformer):
         return {'variables' : []}
     ############### Function Declaration ###############
     def decl_function_decl(self , args):
+        self.whereAmI += 1
         return args[0]
     def function_decl(self , args):
         returnType = args[0]
@@ -884,22 +998,28 @@ class CodeGen(Transformer):
         code += "addi $s5 , $sp , 0 # Storing $sp of function at beginning in $s5\n"
         code += "# Function Body :\n"
         code += stmt_block['code']
-        code += label_end + " :\n"
-        code += "jr $ra\n"
-        return {'code' : code}
+        code += label_end + ":\n"
+        code += "jr $ra\n\n"
+        self.Stack.pop(formals['variable_count']);
+        if self.inClass():
+            self.Stack.pop(1)
+        return {'code' : code , 'name' : functionName}
     def function_decl_void(self , args):
         functionName = args[0].children[0]
         formals = args[1]
         stmt_block = args[2]
-        label_end = functionName + "_end :\n"
+        label_end = functionName + "_end"
         code = functionName + ": # Start function body\n"
         code += "addi $s5 , $sp , 0 # Storing $sp of function at beginning in $s5\n"
         code += "addi $fp , $sp , 0 # Set Frame Pointer of function\n"
         code += "# Function Body :\n"
         code += stmt_block['code']
-        code += label_end
-        code += "jr $ra\n"
-        return {'code': code}
+        code += label_end + ":\n"
+        code += "jr $ra\n\n"
+        self.Stack.pop(formals['variable_count']);
+        if self.inClass():
+            self.Stack.pop(1)
+        return {'code': code , 'name' : functionName}
     ############### return ###############
     def stmt_return_stmt(self, args):
         args[0]['break_labels'] = []
@@ -929,7 +1049,7 @@ class CodeGen(Transformer):
         code += "sw $s5 , 12($sp)\n"
         code += "# Function Arguments\n"
         code += actuals['code']
-        code += "jal " + id + " # Calling Function\n"
+        code += "jal " + self.getFunctionLabel(id) + " # Calling Function\n"
         code += "# Pop Arguments of function\n"
         code += "addi $sp , $sp , " + str(actuals['variable_count']*4) + "\n"
         code += "# Load Back Frame Pointer and Return Address After Function call\n"
@@ -948,6 +1068,45 @@ class CodeGen(Transformer):
         return {'variable_count' : expr_more['variable_count'] + 1 , 'code' : expr['code'] + expr_more['code'] }
     def actuals_empty(self , args):
         return {'variable_count': 0, 'code': ''}
+    ############### Object Method Call ###############
+    def call_obj_method(self , args):
+        obj_expr = args[0]
+        function_id = args[1].children[0]
+        actuals = args[2]
+        object_type = obj_expr['value_type']
+        c = Class.searchClass(object_type)
+        methodOffset = c.methodOffset(function_id)
+        value_type = c.getMethod(function_id)['type']
+        code = "# Calling Method of Object\n"
+        code += "# Object Expression\n"
+        code += obj_expr['code']
+        code += "lw $t1 , 4($sp)\n"
+        code += "addi $sp , $sp , 4\n"
+        code += "lw $t0 , 0($t1) # Loading Vtable\n"
+        code += "addi $t0 , $t0 , " + str(methodOffset) + " # Adding offset of Method in Vtable\n"
+        code += "lw $t2 , 0($t0) # t2 now contains the address of function\n"
+        code += "# Storing Frame Pointer and Return Address Before Calling the object's method : " + function_id + "\n"
+        code += "addi $sp , $sp , -12\n"
+        code += "sw $fp , 4($sp)\n"
+        code += "sw $ra , 8($sp)\n"
+        code += "sw $s5 , 12($sp)\n"
+        code += "# Method\'s Arguments \n"
+        code += actuals['code']
+        code += "sw $t1 , 0($sp) # Pushing object as \"this\" as first argument of method\n"
+        code += "addi $sp , $sp , -4\n"
+        code += "jal $t2 # Calling Object's method\n"
+        code += "# Pop Arguments of function\n"
+        code += "addi $sp , $sp , " + str(actuals['variable_count'] * 4 + 4) + "\n"
+        code += "# Load Back Frame Pointer and Return Address After Function call\n"
+        code += "lw $fp , 4($sp)\n"
+        code += "lw $ra , 8($sp)\n"
+        code += "lw $s5 , 12($sp)\n"
+        code += "addi $sp , $sp , 8\n"
+        if value_type == 'double':
+            code += "s.s $f0 , 4($sp) # Push Return Value from function to Stack\n"
+        else:
+            code += "sw $v0 , 4($sp) # Push Return Value from function to Stack\n"
+        return {'code': code , 'value_type': value_type}
     ######################################################### Class #########################################################
     ############### Class Extends ###############
     def extends_optional(self , args):
@@ -956,8 +1115,20 @@ class CodeGen(Transformer):
     def extends_optional_empty(self , args):
         return {'extends' : None}
     ############### Class Declaration ###############
+    def decl_class_decl(self , args):
+        self.whereAmI += 1
+        return args[0]
     def class_decl(self , args):
-        id = args[0]
-        extends_optional = args[1]
-        implements_optional = args[2]
-        fields = args[3]
+        return args[3]
+    ###############
+    def fields(self , args):
+        return {'code' : args[0]['code'] + args[1]['code']}
+    def fields_empty(self , args):
+        return {'code' : ''}
+    def field_function(self , args):
+        prefix = self.structure[self.whereAmI]['name']
+        args[0]['code'] = args[0]['code'].replace( args[0]['name'] + "_end:" , prefix + "_" + args[0]['name'] + "_end:" )
+        args[0]['code'] = args[0]['code'].replace( args[0]['name'] + ":" , prefix + "_" + args[0]['name'] + ":" )
+        return args[0]
+    def field_variable(self , args):
+        return {'code' : ''}

@@ -1,6 +1,7 @@
 from lark import Lark , Transformer
 from CodeGen import CodeGen
 from CodeGen_First_Pass import Cg
+from Class import Class
 import pprint
 
 grammar = """
@@ -12,7 +13,7 @@ decl_more: decl decl_more -> decl_more
 
 decl: variable_decl -> decl_variable_decl
     | function_decl -> decl_function_decl
-    | class_decl
+    | class_decl -> decl_class_decl
     | interface_decl
 
 variable_decl: variable ";" -> variable_decl
@@ -23,7 +24,7 @@ type: "int" -> type_int
     | "double" -> type_double
     | "bool" -> type_bool
     | "string" -> type_string
-    | id
+    | id -> type_id
     | type "[]" -> type_array
 
 function_decl: type id "(" formals ")" stmt_block -> function_decl
@@ -41,11 +42,11 @@ implements_optional: "implements" id id_more
     | 
 id_more: "," id id_more
     | 
-fields: field fields
-    | 
+fields: field fields -> fields
+    | -> fields_empty
 
-field: variable_decl
-    | function_decl
+field: variable_decl -> field_variable
+    | function_decl -> field_function
 
 interface_decl: "interface" id "{" prototypes "}"
 prototypes: prototype prototypes
@@ -124,18 +125,18 @@ expr_par: "(" expr ")" -> expr_par
 expr_atomic: constant -> expr_atomic_constant
     | left_value -> expr_atomic_left_value
     | call -> expr_atomic_call
-    | "this"
+    | "this" -> expr_atomic_this
     | "ReadInteger()" -> expr_atomic_read_integer
     | "ReadLine()" -> expr_atomic_read_line
-    | "new" id
+    | "new" id -> expr_atomic_new
     | "NewArray" "(" expr "," type ")" -> expr_atomic_new_array
 
 left_value: id -> left_value_id
-    | expr_atomic "." id
+    | expr_atomic "." id -> left_value_obj_var
     | expr_atomic "[" expr "]" -> left_value_array_access
 
 call: id "(" actuals ")" -> call
-    | expr_atomic "."  id "(" actuals ")"
+    | expr_atomic "."  id "(" actuals ")" -> call_obj_method
 
 actuals: expr expr_more -> actuals
     | -> actuals_empty
@@ -167,17 +168,48 @@ COMMENT: "//" /(.)+/ NEWLINE
 """
 
 code = """
-int main(){
-    Print( 12 , " - " , 13);
-    Print( 151231 );
+class Base {
+    int a;
+    void f(int x) {
+        int a;
+        this.a = x;
+        a = 10;
+        Print(a);
+    }
+    void print(){
+        Print(this.a);
+        Print(a);
+    }
 }
+
+class Derived extends Base{
+    int b;
+    void g(int y) {
+        this.print();
+        Print(y);
+    }
+}
+
+int main() {
+    Derived d;
+    d = new Derived;
+    d.f(100);
+    d.g(200);
+}
+
 """
 
 CodeGen_First_Pass = Cg()
 parser_first_pass = Lark(grammar , parser="lalr" , transformer=CodeGen_First_Pass , debug=False)
 parser_first_pass.parse(code)
+# Class.log()
+# raise Exception("First Pass !!!")
 parser = Lark(grammar,
               parser="lalr",
-              transformer=CodeGen(CodeGen_First_Pass.get_functions(),CodeGen_First_Pass.get_global_vars()),
+              transformer=CodeGen(
+                  CodeGen_First_Pass.get_functions(),
+                  CodeGen_First_Pass.get_global_vars(),
+                  CodeGen_First_Pass.get_structure()
+              ),
               debug=False)
 parser.parse(code)
