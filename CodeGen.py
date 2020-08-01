@@ -125,7 +125,7 @@ class CodeGen(Transformer):
         # Search in global scope
         for function in self.Functions:
             if function['name'] == name:
-                name
+                return name
         raise Exception("function ( " + name + " ) not found !!!")
 
     def in_break_labels(self , arr , name):
@@ -830,7 +830,10 @@ class CodeGen(Transformer):
             code += "lw $a0 , 0($sp)\n"
             code += "li $v0 , 4\n"
         elif expr_type == "double":
-            code += "l.s $f12 , 0($sp)\n"
+            code += "l.s $f4 , 0($sp)\n"
+            code += "sw $ra , 0($sp)\n"
+            code += "jal PrintDouble # Double Print Function\n"
+            code += "lw $ra , 0($sp)\n"
             code += "li $v0 , 2\n"
         elif expr_type == "bool":
             code += "lw $a0 , 0($sp)\n"
@@ -842,7 +845,8 @@ class CodeGen(Transformer):
         else:
             code += "lw $a0 , 0($sp)\n"
             code += "li $v0 , 1\n"
-        code += "syscall\n"
+        if expr_type != "double":
+            code += "syscall\n"
         return {'code': code + args[1]['code']}
     def print_expr_more_empty(self, args):
         return {'code': ''}
@@ -1074,6 +1078,14 @@ class CodeGen(Transformer):
         function_id = args[1].children[0]
         actuals = args[2]
         object_type = obj_expr['value_type']
+        if object_type[-2:] == "[]" and function_id == 'length':
+            code = "# Array Length\n"
+            code += "# Array Expr\n"
+            code += obj_expr['code']
+            code += "lw $t0 , 4($sp)\n"
+            code += "lw $t0 , 0($t0)\n"
+            code += "sw $t0 , 4($sp) # Pushing length of array to stack\n"
+            return {'code' : code , 'value_type' : object_type[0:-2]}
         c = Class.searchClass(object_type)
         methodOffset = c.methodOffset(function_id)
         value_type = c.getMethod(function_id)['type']

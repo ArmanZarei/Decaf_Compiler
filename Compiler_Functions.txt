@@ -60,6 +60,39 @@ StringsInequality:
 	addi $v0 , $v0 , 2 # All 1's from bit[1] to left becomes Zero
 	jr $ra
 
+PrintDouble:
+    # Assume $f4 is A*.BCDEFG*
+    mov.s $f12 , $f4
+    li.s $f10 , 10000.0
+    cvt.w.s $f11,$f12
+    mfc1 $t0,$f11 # $t0 is A*
+    move $a0 , $t0
+    li $v0 , 1
+    syscall # Printing A*
+    mtc1 $t0 , $f11
+    cvt.s.w $f11 , $f11 # $f11 has A*.0
+    sub.s $f11 , $f12 , $f11 # $f11 is 0.BCDEFG*
+    mul.s $f11 , $f11 , $f10 #f11 is BCDE.FG*
+    cvt.w.s $f9,$f11
+    mfc1 $t0,$f9 # $t0 is BCDE
+    mtc1 $t0 , $f12
+    cvt.s.w $f12 , $f12 # $f12 is BCDE.0
+    sub.s $f11 , $f11 , $f12 # $f11 is 0.FG*
+    li $t1 , 0
+    li.s $f0 , 0.5
+    c.le.s $f11 , $f0
+    bc1t label_unique_print_double
+    li $t1 , 1
+    label_unique_print_double:
+    add $t0 , $t0 , $t1 # $t0 is rounded of decimal with 4 digits
+    li $a0 , '.'
+    li $v0 , 11
+    syscall # Printing dot
+    move $a0 , $t0
+    li $v0 , 1
+    syscall # Printing decimal
+    jr $ra
+
 itod:
 	lw $t0 , 4($sp)
     mtc1 $t0, $f12
