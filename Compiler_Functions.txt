@@ -69,28 +69,33 @@ PrintDouble:
     move $a0 , $t0
     li $v0 , 1
     syscall # Printing A*
+	li $a0 , '.'
+    li $v0 , 11
+    syscall # Printing dot
+	li.s $f10 , 10.0
     mtc1 $t0 , $f11
     cvt.s.w $f11 , $f11 # $f11 has A*.0
     sub.s $f11 , $f12 , $f11 # $f11 is 0.BCDEFG*
-    mul.s $f11 , $f11 , $f10 #f11 is BCDE.FG*
-    cvt.w.s $f9,$f11
-    mfc1 $t0,$f9 # $t0 is BCDE
-    mtc1 $t0 , $f12
-    cvt.s.w $f12 , $f12 # $f12 is BCDE.0
-    sub.s $f11 , $f11 , $f12 # $f11 is 0.FG*
-    li $t1 , 0
+    abs.s $f11 , $f11
+	# Loop digits decimal
+	li $t2 , 3
+	print_double_loop_decimal:
+	mul.s $f11 , $f11 , $f10 # $f11 is { B.CDEFG* or C.DEFG* or D.EFG* or E.FG* }
+    cvt.w.s $f12,$f11
+    mfc1 $t0,$f12 # $t0 is { B or C or D or E }
+    cvt.s.w $f12 , $f12 # $f12 is { B.0 or C.0 or D.0 , E.0 }
+    sub.s $f11 , $f11 , $f12 # $f11 is { 0.CDEFG* or 0.DEFG* or 0.EFG* or 0.FG* }
+	bne $t2 , $zero , not_the_fourth_digit
     li.s $f0 , 0.5
     c.le.s $f11 , $f0
-    bc1t label_unique_print_double
-    li $t1 , 1
-    label_unique_print_double:
-    add $t0 , $t0 , $t1 # $t0 is rounded of decimal with 4 digits
-    li $a0 , '.'
-    li $v0 , 11
-    syscall # Printing dot
-    move $a0 , $t0
-    li $v0 , 1
-    syscall # Printing decimal
+    bc1t not_the_fourth_digit
+    addi $t0 , $t0 , 1
+    not_the_fourth_digit:
+	move $a0 , $t0
+	li $v0 , 1
+	syscall
+	addi $t2 , $t2 , -1
+	bne $t2 , -1 , print_double_loop_decimal
     jr $ra
 
 itod:

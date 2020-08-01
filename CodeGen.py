@@ -116,6 +116,7 @@ class CodeGen(Transformer):
         self.data_code += "str_false : .asciiz \"false\" \n"
         self.data_code += "str_true : .asciiz \"true\" \n"
         self.data_code += "str_bool : .word str_false , str_true\n"
+        self.data_code += "obj_null : .word 61235\n"
         self.data_code += Class.getVtables()
         self.log_code(code + "\n\n.data\n" + self.data_code)
         return args
@@ -241,12 +242,7 @@ class CodeGen(Transformer):
     def expr_equality_equal(self, args):
         value_type = args[0]['value_type']
         code = "# Equal Expression\n"
-        if value_type == 'int' or value_type == 'bool':
-            code += "lw $t0 , 8($sp)\n"
-            code += "lw $t1 , 4($sp)\n"
-            code += "seq $t0 , $t0 , $t1\n"
-            code += "sw $t0 , 8($sp)\n"
-        elif value_type == 'double':
+        if value_type == 'double':
             labelLower = self.label_generator()
             labelEnd = self.label_generator()
             code += "l.s $f0 , 8($sp)\n"
@@ -271,7 +267,10 @@ class CodeGen(Transformer):
             code += "addi $sp , $sp , 8\n"
             code += "sw $v0 , 8($sp) # Saving Result of Equality of two Strings\n"
         else:
-            raise Exception("Unhandled Type for E !")
+            code += "lw $t0 , 8($sp)\n"
+            code += "lw $t1 , 4($sp)\n"
+            code += "seq $t0 , $t0 , $t1\n"
+            code += "sw $t0 , 8($sp)\n"
         code += "addi $sp , $sp , 4\n"
         return {'code': args[0]['code'] + args[1]['code'] + code,
                 'value_type': 'bool'}
@@ -279,14 +278,7 @@ class CodeGen(Transformer):
     def expr_equality_not_equal(self, args):
         value_type = args[0]['value_type']
         code = "# Not Equal Expression\n"
-        if value_type == 'int' or value_type == 'bool':
-            code += "lw $t0 , 8($sp)\n"
-            code += "lw $t1 , 4($sp)\n"
-            code += "seq $t0 , $t0 , $t1\n"
-            code += "nor $t0 , $t0 , $t0\n"
-            code += 'addi $t0 , $t0 , 2\n'
-            code += "sw $t0 , 8($sp)\n"
-        elif value_type == 'double':
+        if value_type == 'double':
             labelLower = self.label_generator()
             labelEnd = self.label_generator()
             code += "l.s $f0 , 8($sp)\n"
@@ -311,7 +303,12 @@ class CodeGen(Transformer):
             code += "addi $sp , $sp , 8\n"
             code += "sw $v0 , 8($sp) # Saving Result of inEquality of two Strings\n"
         else:
-            raise Exception("Unhandled Type for NE !")
+            code += "lw $t0 , 8($sp)\n"
+            code += "lw $t1 , 4($sp)\n"
+            code += "seq $t0 , $t0 , $t1\n"
+            code += "nor $t0 , $t0 , $t0\n"
+            code += 'addi $t0 , $t0 , 2\n'
+            code += "sw $t0 , 8($sp)\n"
         code += "addi $sp , $sp , 4\n"
         return {'code': args[0]['code'] + args[1]['code'] + code,
                 'value_type': 'bool'}
@@ -672,7 +669,8 @@ class CodeGen(Transformer):
         return args[0]
     ############### Integer Constant ###############
     def constant_int(self , args):
-        code = "# Int Constant : " + str(args[0].value) + "\n"
+        val = int(args[0].value,0)
+        code = "# Int Constant : " + str(val) + "\n"
         code += "li $t0 , " + str(args[0].value) + "\n"
         code += 'sw $t0 , 0($sp)\n'
         code += 'addi $sp, $sp, -4\n'
@@ -680,7 +678,8 @@ class CodeGen(Transformer):
                 'value_type': 'int'}
     ############### Double Constant ###############
     def constant_double(self, args):
-        code = "# Double Constant : " + str(args[0].value) + "\n"
+        val = float(args[0].value);
+        code = "# Double Constant : " + str(val) + "\n"
         code += "li.s $f0, " + str(args[0].value) + "\n"
         code += "s.s $f0, 0($sp)\n"
         code += "addi $sp, $sp, -4\n"
@@ -701,12 +700,18 @@ class CodeGen(Transformer):
     def constant_string(self, args):
         name = self.data_name_generator()
         code = "# String Constant : " + args[0].value + "\n"
-        code += 'la $t0, ' + name + '\n'
-        code += 'sw $t0, 0($sp)\n'
-        code += 'addi $sp, $sp, -4\n'
+        code += 'la $t0 , ' + name + '\n'
+        code += 'sw $t0 , 0($sp)\n'
+        code += 'addi $sp , $sp , -4\n'
         self.data_code += name + ': .asciiz ' + args[0].value + '\n'
         return {'code': code,
-                'value_type': 'string'}
+                'value_type' : 'string'}
+    ############### String Constant ###############
+    def constant_null(self , args):
+        code = "la $t0 , obj_null # Null Object\n"
+        code += "sw $t0 , 0($sp)\n"
+        code += "addi $sp , $sp , -4\n"
+        return {'code' : code , 'value_type' : 'null_type'}
     ######################################################### Statement #########################################################
     ############### Statement Block ###############
     def stmt_block(self , args):
@@ -865,6 +870,7 @@ class CodeGen(Transformer):
         for break_label in re.findall(pattern, stmt['code']):
             count = self.get_count_break_label(break_labels, break_label)
             code_for_break = "addi $sp , $sp , " + str(count * 4) + " # Pop elements before\n"
+            code_for_break += "addi $fp , $sp , 4 # Set framepointer\n"
             code_for_break += "j " + endLabel + " # Break from loop for\n"
             stmt['code'] = stmt['code'].replace("@" + break_label + "@", code_for_break)
 

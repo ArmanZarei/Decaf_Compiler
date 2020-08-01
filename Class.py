@@ -93,8 +93,7 @@ class Class:
     def getVtables():
         code = ''
         for c in Class.classes:
-            if len(c.methods) > 0:
-                code += c.name + "_vtable:\n"
+            code += c.name + "_vtable:\n"
             for method in c.methods:
                 code += "\t.word " + method['prefix'] + "_" + method['name'] + "\n"
         return code
@@ -117,6 +116,8 @@ class Class:
     # Check whether 2 classes are convertable or not
     @staticmethod
     def areConvertable(name1 , name2):
+        if name1 == "null_type" or name2 == "null_type":
+            return True;
         a = Class.searchClass(name1)
         b = Class.searchClass(name2)
         if a == None or b == None:
