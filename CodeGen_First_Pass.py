@@ -74,7 +74,8 @@ class Cg(Transformer):
         return "string"
     def type_array(self, args):
         return args[0] + "[]"
-
+    def type_id(self , args):
+        return args[0].children[0]
     ############# Function #############
     def decl_function_decl(self , args):
         function = args[0]
