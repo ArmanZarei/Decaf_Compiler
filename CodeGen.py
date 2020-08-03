@@ -631,11 +631,18 @@ class CodeGen(Transformer):
         return {'code' : code , 'value_type' : base_arr['value_type'][0:-2]}
     ############### Read Integer ###############
     def expr_atomic_read_integer(self, args):
-        code = "# Read Integer : \n"
-        code += "li $v0 , 5\n"
-        code += "syscall\n"
-        code += "addi $sp , $sp , -4\n"
-        code += "sw $v0 , 4($sp)\n"
+        code = "# Read Integer ( Decimal or Hexadecimal ) : \n"
+        code = "# Read Line : \n"
+        code += "addi $sp , $sp , -8\n"
+        code += "sw $fp , 8($sp)\n"
+        code += "sw $ra , 4($sp)\n"
+        code += "jal ReadLine # Calling Read Line Function \n"
+        code += "move $a0 , $v0 # Moving address of string to $a0\n"
+        code += "jal readInteger # Read Integer Function\n"
+        code += "lw $fp , 8($sp)\n"
+        code += "lw $ra , 4($sp)\n"
+        code += "addi $sp , $sp , 4\n"
+        code += "sw $v0 , 4($sp) # Saving Result Read Integer to Stack\n"
         return {'code': code, 'value_type': 'int'}
     ############### Read Line ###############
     def expr_atomic_read_line(self, args):
@@ -678,7 +685,7 @@ class CodeGen(Transformer):
                 'value_type': 'int'}
     ############### Double Constant ###############
     def constant_double(self, args):
-        val = float(args[0].value);
+        val = float(args[0].value)
         code = "# Double Constant : " + str(val) + "\n"
         code += "li.s $f0, " + str(args[0].value) + "\n"
         code += "s.s $f0, 0($sp)\n"
@@ -763,10 +770,7 @@ class CodeGen(Transformer):
             code += "lw $a0 , 0($sp)\n"
             code += "li $v0 , 4\n"
         elif expr_type == "double":
-            code += "l.s $f4 , 0($sp)\n"
-            code += "sw $ra , 0($sp)\n"
-            code += "jal PrintDouble # Double Print Function\n"
-            code += "lw $ra , 0($sp)\n"
+            code += "l.s $f12 , 0($sp)\n"
             code += "li $v0 , 2\n"
         elif expr_type == "bool":
             code += "lw $a0 , 0($sp)\n"
@@ -778,8 +782,7 @@ class CodeGen(Transformer):
         else:
             code += "lw $a0 , 0($sp)\n"
             code += "li $v0 , 1\n"
-        if expr_type != "double":
-            code += "syscall\n"
+        code += "syscall\n"
         return {'code': code + args[1]['code']}
     def print_expr_more_empty(self, args):
         return {'code': ''}
@@ -895,7 +898,7 @@ class CodeGen(Transformer):
         return {'code' : code , 'break_labels' : []}
     ############### Break ###############
     def stmt_break_stmt(self , args):
-        args[0]['break_labels'] = []
+        args[0]['break_labels'] = [{'name' : args[0]['code'][1:-2] , 'count' : 0}]
         return args[0]
     def break_stmt(self , args):
         code = "@" + self.break_generator() + "@\n"

@@ -19,7 +19,10 @@ class Cg(Transformer):
         return self.Global_Variables
     def get_structure(self):
         return self.structure
+
     ############# Class Variables and Functions #############
+    def start(self , args):
+        Class.handleInheritance()
     def class_decl(self , args):
         id = args[0].children[0]
         extends = args[1]

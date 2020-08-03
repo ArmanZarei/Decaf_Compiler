@@ -5,25 +5,56 @@ class Class:
     classes = []
 
     def __init__(self, name, parentName=None):
-        self.parent = None
+        self.parent = parentName
+        self.children = []
         self.name = name
         self.variables = []
         self.methods = []
-        if parentName is not None:
-            parent = Class.searchClass(parentName)
-            self.extendVariables(parent)
-            self.extendMethods(parent)
-            self.parent = parent
         Class.classes.append(self)
+
+    @staticmethod
+    def handleInheritance():
+        roots = []
+        for cls in Class.classes:
+            par = cls.parent
+            if par != None:
+                parObj = Class.searchClass(par)
+                cls.parent = parObj
+                parObj.children.append(cls)
+            else:
+                roots.append(cls)
+        # Loop through roots to chlldren
+        for root in roots:
+            root.extendsParent(None)
+
+    def extendsParent(self , parrent):
+        if parrent != None:
+            self.extendVariables(parrent)
+            self.extendMethods(parrent)
+        for child in self.children:
+            child.extendsParent(self)
+
 
     # Inherit Variables an Methods from parent
     def extendVariables(self, parent):
+        tmpVars = self.variables
+        self.variables = []
         for var in parent.variables:
             self.variables.append(var.copy())
+        for var in tmpVars:
+            if not self.variableExists(var['name']):
+                self.variables.append(var.copy())
 
     def extendMethods(self, parent):
+        tmpMethods = self.methods
+        self.methods = []
         for method in parent.methods:
             self.methods.append(method.copy())
+        for method in tmpMethods:
+            if not self.methodExists(method['name']):
+                self.methods.append(method.copy())
+            else:
+                self.overrideMethod(method['name'])
 
     # Find Offset of Variables and Methods from Start Address
     def variableOffset(self, name):
@@ -62,10 +93,7 @@ class Class:
         raise Exception("Variable (" + name + ") not exists in Class !!!")
 
     def addMethod(self, name, methodType):
-        if self.methodExists(name):
-            self.overrideMethod(name)
-        else:
-            self.methods.append({'name': name, 'type': methodType, 'prefix': self.name})
+        self.methods.append({'name': name, 'type': methodType, 'prefix': self.name})
 
     def getMethod(self , name):
         for method in self.methods:
