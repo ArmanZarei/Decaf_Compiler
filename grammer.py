@@ -167,15 +167,6 @@ COMMENT: "//" /(.)*/ NEWLINE
 """
 
 code = """
-  int main(){
-    while(ReadInteger()){
-        Print("hey");
-    }
-    while(ReadInteger()){
-        Print("hoy");
-    }
-}
-
 """
 
 CodeGen_First_Pass = Cg()

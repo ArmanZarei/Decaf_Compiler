@@ -98,7 +98,7 @@ class CodeGen(Transformer):
     #[--------------------------------------------------------- Debugging tools ---------------------------------------------------------]
     def log_code(self,code):
         dirname = os.path.dirname(__file__)
-        file = open(dirname + "/code.txt","w")
+        file = open(dirname + "/code.s","w")
         file.write(code)
         file.close()
     #[--------------------------------------------------------- Semantic Actions ---------------------------------------------------------]
@@ -842,6 +842,7 @@ class CodeGen(Transformer):
         for break_label in re.findall(pattern, stmt['code']):
             count = self.get_count_break_label(break_labels , break_label)
             code_for_break = "addi $sp , $sp , " + str(count * 4) + " # Pop elements before\n"
+            code_for_break += "addi $fp , $sp , 4 # Set Frame Pointer\n"
             code_for_break += "j " + endLabel + " # Break from loop while\n"
             stmt['code'] = stmt['code'].replace("@" + break_label + "@" , code_for_break)
 
