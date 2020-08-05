@@ -756,7 +756,7 @@ class CodeGen(Transformer):
         args[0]['break_labels'] = []
         return args[0]
     def print_stmt(self, args):
-        code = "li $a0 , '\\n'\n"
+        code = "li $a0 , 10 # '\\n'\n"
         code += "li $v0 , 11\n"
         code += "syscall\n"
         return {'code': args[0]['code'] + code}

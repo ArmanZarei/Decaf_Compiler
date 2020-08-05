@@ -1,7 +1,7 @@
 #-------------------------------------------- Compiler Functions --------------------------------------------#
 ReadLine:
         li $t0 , 0
-        li $t1 , '\n'
+        li $t1 , 10 # '\n'
         loopReadLine:
             li $v0 , 12
             syscall
