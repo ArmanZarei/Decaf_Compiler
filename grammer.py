@@ -167,6 +167,11 @@ COMMENT: "//" /(.)*/ NEWLINE
 """
 
 code = """
+double a;
+int main(){
+    a = 2.52;
+    Print(a);
+}
 """
 
 CodeGen_First_Pass = Cg()

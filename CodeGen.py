@@ -191,7 +191,7 @@ class CodeGen(Transformer):
         value_type = args[0]['value_type']
         code = "# Left Hand Side Assign\n"
         code += args[0]['code']
-        code += "# Right Hand Size Assign\n"
+        code += "# Right Hand Side Assign\n"
         code += args[1]['code']
         code += "# Assign Right Side to Left\n"
         code += "lw $t0 , 8($sp)\n"
@@ -678,7 +678,7 @@ class CodeGen(Transformer):
     def constant_int(self , args):
         val = int(args[0].value,0)
         code = "# Int Constant : " + str(val) + "\n"
-        code += "li $t0 , " + str(args[0].value) + "\n"
+        code += "li $t0 , " + str(val) + "\n"
         code += 'sw $t0 , 0($sp)\n'
         code += 'addi $sp, $sp, -4\n'
         return {'code': code,
@@ -687,7 +687,7 @@ class CodeGen(Transformer):
     def constant_double(self, args):
         val = float(args[0].value)
         code = "# Double Constant : " + str(val) + "\n"
-        code += "li.s $f0, " + str(args[0].value) + "\n"
+        code += "li.s $f0, " + str(val) + "\n"
         code += "s.s $f0, 0($sp)\n"
         code += "addi $sp, $sp, -4\n"
         return {'code': code,
